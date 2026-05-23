@@ -1,0 +1,107 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #0d0d1a;
+  color: #e5e7eb;
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+#root { width: 100%; min-height: 100svh; }
+
+/* ─── Shell + Nav ──────────────────────────────────────────────────────── */
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+.shell-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: #0f1624;
+  border-bottom: 1px solid #1e2d50;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.shell-nav .brand {
+  font-size: 1.2rem;
+  text-decoration: none;
+  color: #81D332;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  background: #111827;
+  border: 1px solid #1e2d50;
+  margin-right: 0.5rem;
+}
+.shell-nav .brand:hover { background: #16213e; }
+
+.nav-link {
+  text-decoration: none;
+  color: #aaa;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-link:hover { background: #16213e; color: #e0e0e0; }
+.nav-link.active { background: #1e3a5f; color: #81D332; }
+
+.shell-main { flex: 1; }
+
+/* ─── Home ─────────────────────────────────────────────────────────────── */
+.home {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 2rem;
+}
+
+.home-header { text-align: center; margin-bottom: 2.5rem; }
+.home-header h1 {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #81D332;
+  text-shadow: 0 0 24px #81D33233;
+}
+.home-header p { color: #555; margin: 0.4rem 0 0; font-size: 0.95rem; }
+
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.home-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.75rem 1.5rem;
+  background: #111827;
+  border: 1px solid #1e2d50;
+  border-radius: 18px;
+  text-decoration: none;
+  color: #e0e0e0;
+  transition: transform 0.15s, border-color 0.2s, background 0.2s;
+}
+.home-card:hover {
+  transform: translateY(-3px);
+  border-color: #81D33288;
+  background: #16213e;
+}
+.home-card-icon { font-size: 2.4rem; line-height: 1; }
+.home-card h2   { margin: 0; font-size: 1.25rem; color: #81D332; }
+.home-card p    { margin: 0; color: #aaa; font-size: 0.9rem; line-height: 1.4; }
+
+@media (max-width: 480px) {
+  .shell-nav { padding: 0.6rem 0.75rem; }
+  .home { padding: 2rem 0.75rem; }
+  .home-header h1 { font-size: 1.9rem; }
+}

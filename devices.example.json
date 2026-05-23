@@ -1,0 +1,21 @@
+{
+  "devices": [
+    {
+      "id": "COLE_AQUI_O_deviceId",
+      "key": "COLE_AQUI_A_localKey",
+      "ip": "192.168.1.100",
+      "version": "3.3",
+      "name": "Lâmpada Sala (Neo)",
+      "switchDp": 20,
+      "brightnessDp": 22
+    },
+    {
+      "id": "OUTRO_deviceId",
+      "key": "OUTRA_localKey",
+      "version": "3.3",
+      "name": "Lâmpada Quarto (Positivo)",
+      "switchDp": 20,
+      "brightnessDp": 22
+    }
+  ]
+}

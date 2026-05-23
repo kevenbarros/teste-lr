@@ -1,0 +1,112 @@
+.lamps-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  color: #e5e7eb;
+}
+
+.lamps-page h1 {
+  margin: 0 0 1.5rem;
+  font-weight: 600;
+}
+
+.lamps-error {
+  background: #3f1d1d;
+  border: 1px solid #7f1d1d;
+  color: #fecaca;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.lamps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.lamp-card {
+  background: #1a1d24;
+  border: 1px solid #2a2f3a;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.lamp-card.offline { opacity: 0.6; }
+.lamp-card.automation { margin-bottom: 1.5rem; }
+
+.lamp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.lamp-card-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.lamp-status {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: #2a2f3a;
+}
+.lamp-status.ok  { background: #14532d; color: #bbf7d0; }
+.lamp-status.bad { background: #7f1d1d; color: #fecaca; }
+
+.lamp-effect-badge {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.7rem;
+  background: #1e3a8a;
+  color: #bfdbfe;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+
+.lamp-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.lamp-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.lamp-slider-row label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.lamp-card button {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  background: #2a2f3a;
+  color: #e5e7eb;
+  border: 1px solid #3a4150;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.lamp-card button:hover:not(:disabled) { background: #3a4150; }
+.lamp-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.lamp-card input[type="number"] {
+  padding: 0.5rem;
+  background: #0f1115;
+  color: #e5e7eb;
+  border: 1px solid #3a4150;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
