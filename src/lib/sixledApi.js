@@ -10,5 +10,10 @@ export function buildSixledApi(ips) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cfg),
     }).then(r => r.json()),
+    extend: (tp1, restart) => fetch(`/api/sixled/extend${qs}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tp1, restart }),
+    }).then(r => r.json()),
   };
 }

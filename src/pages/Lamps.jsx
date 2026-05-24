@@ -69,6 +69,7 @@ function QuartoAutomation() {
 function LampCard({ lamp, onChange }) {
   const [busy, setBusy] = useState(false);
   const [blinkMs, setBlinkMs] = useState(500);
+  const [blinkDurationS, setBlinkDurationS] = useState(5);
 
   const run = async (fn) => {
     setBusy(true);
@@ -111,9 +112,18 @@ function LampCard({ lamp, onChange }) {
         />
       </div>
 
+      <div className="lamp-slider-row">
+        <label>Duração (s, 0 = infinito):</label>
+        <input
+          type="number" min="0" max="600" step="1"
+          value={blinkDurationS}
+          onChange={e => setBlinkDurationS(Number(e.target.value))}
+        />
+      </div>
+
       <div className="lamp-row">
-        <button disabled={busy} onClick={() => run(() => api.blink(lamp.id, blinkMs))}>
-          Piscar
+        <button disabled={busy} onClick={() => run(() => api.blink(lamp.id, blinkMs, blinkDurationS * 1000))}>
+          {blinkDurationS > 0 ? `Piscar ${blinkDurationS}s e desligar` : 'Piscar'}
         </button>
         <button disabled={busy} onClick={() => run(() => api.flicker(lamp.id))}>
           Falhando (flicker)

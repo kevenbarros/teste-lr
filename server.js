@@ -143,14 +143,29 @@ app.post('/api/lamps/:id/blink', (req, res) => {
   if (!entry?.device) return res.status(404).json({ error: 'lâmpada não conectada' });
   stopEffect(entry);
   const intervalMs = Math.max(100, Math.min(5000, Number(req.body.intervalMs) || 500));
+  const durationMs = Math.max(0, Number(req.body.durationMs) || 0);
   const dp = entry.meta.switchDp || 20;
   let state = false;
   const handle = setInterval(() => {
     state = !state;
     entry.device.set({ dps: dp, set: state }).catch(() => {});
   }, intervalMs);
-  entry.effect = { type: 'blink', handle };
-  res.json({ ok: true, intervalMs });
+
+  let endTimer = null;
+  if (durationMs > 0) {
+    endTimer = setTimeout(async () => {
+      clearInterval(handle);
+      entry.effect = null;
+      try { await entry.device.set({ dps: dp, set: false }); } catch {}
+    }, durationMs);
+  }
+
+  entry.effect = {
+    type: 'blink',
+    handle,
+    stop: () => { if (endTimer) clearTimeout(endTimer); },
+  };
+  res.json({ ok: true, intervalMs, durationMs });
 });
 
 app.post('/api/lamps/:id/flicker', (req, res) => {
@@ -301,6 +316,8 @@ function parseSixledDevices(req) {
 }
 
 const sixledQueues = new Map();
+const sixledCache = new Map(); // `${ip}${path}` → { ts, value, pending }
+const SIXLED_CACHE_MS = 500;
 
 function sixledEnqueue(ip, fn) {
   const prev = sixledQueues.get(ip) || Promise.resolve();
@@ -309,9 +326,30 @@ function sixledEnqueue(ip, fn) {
   return next;
 }
 
+// Dedup concurrent calls for the same ip+path and cache the result briefly.
+// Without this, polling clients (1Hz) flood the per-IP queue when a device
+// times out (~6s), causing an ever-growing backlog.
+function sixledCached(ip, path, fn) {
+  const key = `${ip}${path}`;
+  const now = Date.now();
+  const entry = sixledCache.get(key);
+  if (entry?.pending) return entry.pending;
+  if (entry && now - entry.ts < SIXLED_CACHE_MS) return Promise.resolve(entry.value);
+
+  const pending = fn().then(value => {
+    sixledCache.set(key, { ts: Date.now(), value });
+    return value;
+  }, () => {
+    sixledCache.set(key, { ts: Date.now(), value: null });
+    return null;
+  });
+  sixledCache.set(key, { ts: entry?.ts ?? 0, value: entry?.value, pending });
+  return pending;
+}
+
 async function sixledApiFetch(ip, path) {
   const ctrl = new AbortController();
-  const id = setTimeout(() => ctrl.abort(), 6000);
+  const id = setTimeout(() => ctrl.abort(), 2000);
   try {
     return await fetch(`http://${ip}${path}`, { signal: ctrl.signal });
   } finally {
@@ -334,7 +372,7 @@ function sixledTcpFetch(ip, path, opts = {}) {
 
     const socket = net.createConnection({ host: ip, port: 80 });
     const chunks = [];
-    socket.setTimeout(8000);
+    socket.setTimeout(3000);
     socket.on('timeout', () => { socket.destroy(); reject(new Error('tcp timeout')); });
     socket.on('error', reject);
     socket.on('connect', () => socket.write(buf));
@@ -359,7 +397,7 @@ async function sixledLogin(device) {
 }
 
 function sixledApiGet(device, path) {
-  return sixledEnqueue(device.ip, async () => {
+  return sixledCached(device.ip, path, () => sixledEnqueue(device.ip, async () => {
     try {
       let r = await sixledApiFetch(device.ip, path);
       if (r.status !== 202) {
@@ -369,7 +407,7 @@ function sixledApiGet(device, path) {
       if (r.status !== 202) return null;
       return await r.json();
     } catch { return null; }
-  });
+  }));
 }
 
 function sixledPageGet(device, path) {
@@ -512,6 +550,34 @@ app.post('/api/sixled/config', async (req, res) => {
     ip: d.ip,
     ok: await sixledFormPost(d, '/salvacron', form),
   })));
+  res.json({ ok: true, results });
+});
+
+// Replace tp1 on each clock (preserves everything else from the device's
+// current config) and optionally stop+start so the new duration takes effect.
+// Used when extending a running chronometer from the UI.
+app.post('/api/sixled/extend', async (req, res) => {
+  const list = parseSixledDevices(req);
+  const tp1 = String(req.body?.tp1 || '').trim();
+  const restart = req.body?.restart !== false;
+  if (!/^\d{1,2}:\d{2}:\d{2}$/.test(tp1)) {
+    return res.status(400).json({ error: 'tp1 inválido (use HH:MM:SS)' });
+  }
+
+  const results = await Promise.all(list.map(async (d) => {
+    const html = await sixledPageGet(d, '/index');
+    if (!html || html.includes('nmpg="Login"')) {
+      return { ip: d.ip, ok: false, reason: 'config não acessível' };
+    }
+    const cfg = parseSixledConfig(html);
+    cfg.tp1 = tp1;
+    const saveOk = await sixledFormPost(d, '/salvacron', buildSixledFormData(cfg));
+    if (saveOk && restart) {
+      await sixledApiGet(d, '/cmd?n=3');
+      await sixledApiGet(d, '/cmd?n=1');
+    }
+    return { ip: d.ip, ok: saveOk };
+  }));
   res.json({ ok: true, results });
 });
 

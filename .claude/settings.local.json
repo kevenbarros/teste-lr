@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(findstr /i devices)",
+      "Bash(git -C \"c:\\\\Users\\\\keven\\\\OneDrive\\\\Área de Trabalho\\\\keven\\\\lampada-relogio\" diff devices.example.json)",
+      "Bash(curl -s --max-time 6 \"http://localhost:5858/api/sixled/status\")"
+    ]
+  }
+}

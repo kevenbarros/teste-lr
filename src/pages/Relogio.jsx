@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildSixledApi } from '../lib/sixledApi.js';
+import {
+  useChrono, chronoDisplayText, startChrono, pauseChrono, stopChrono, restartChrono,
+  addChronoTime, getChronoSnapshot, msToHHMMSS,
+} from '../lib/localChrono.js';
 import './Relogio.css';
 
 const DEFAULT_CONFIG = {
@@ -49,7 +53,7 @@ export default function Relogio() {
 
   useEffect(() => {
     void fetchStatus();
-    pollRef.current = setInterval(() => { void fetchStatus(); }, 2000);
+    pollRef.current = setInterval(() => { void fetchStatus(); }, 1000);
     return () => clearInterval(pollRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api]);
@@ -59,6 +63,7 @@ export default function Relogio() {
     if (!next[0] || !next[1]) return;
     setIps(next);
     try { localStorage.setItem(IPS_STORAGE_KEY, next.join(',')); } catch {}
+    window.dispatchEvent(new Event('sixled:ips-changed'));
     setDevices([]);
   }
 
@@ -71,8 +76,32 @@ export default function Relogio() {
 
   async function sendCmd(n, label) {
     setBusy(true); setLastCmd(label);
+    // Local chrono mirrors the physical command (the SIXLED firmware doesn't
+    // expose its displayed time, so we run our own countdown in sync).
+    if (n === 1) startChrono();
+    else if (n === 4) restartChrono();
+    else if (n === 2) pauseChrono();
+    else if (n === 3) stopChrono();
     try { await api.cmd(n); await fetchStatus(); }
     finally { setBusy(false); setTimeout(() => setLastCmd(null), 1500); }
+  }
+
+  async function handleAddTime(minutes) {
+    const extraMs = minutes * 60 * 1000;
+    addChronoTime(extraMs);
+    const snap = getChronoSnapshot();
+    const tp1 = msToHHMMSS(snap.remainingMs);
+    const shouldRestart = snap.state === 'running' || snap.state === 'preparing' || snap.state === 'finished';
+
+    setLastCmd(`+${minutes} min`);
+    setBusy(true);
+    try {
+      await api.extend(tp1, shouldRestart);
+    } catch {}
+    finally {
+      setBusy(false);
+      setTimeout(() => setLastCmd(null), 1500);
+    }
   }
 
   const commitBrightness = (e) => { void api.par(1, e.currentTarget.value); };
@@ -117,6 +146,7 @@ export default function Relogio() {
 
   const allOnline = devices.length > 0 && devices.every(d => d.online);
   const anyOffline = devices.some(d => !d.online);
+  const chrono = useChrono();
 
   return (
     <div className="relogio-page">
@@ -127,6 +157,9 @@ export default function Relogio() {
         </div>
         <h1 className="rl-title">SIXLED Sync</h1>
         <p className="rl-sub">Controle sincronizado dos dois relógios</p>
+        <div className={`rl-bigtime ${chrono.state}`}>
+          {chronoDisplayText(chrono)}
+        </div>
       </header>
 
       <section className="rl-ip-section">
@@ -193,6 +226,15 @@ export default function Relogio() {
               onClick={() => sendCmd(n, label)} disabled={busy}>
               <span className="rl-cmd-icon">{icon}</span>
               <span>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="rl-addtime-row">
+          {[1, 5, 10].map(min => (
+            <button key={min} className="rl-addtime-btn"
+              onClick={() => handleAddTime(min)} disabled={busy}>
+              +{min} min
             </button>
           ))}
         </div>

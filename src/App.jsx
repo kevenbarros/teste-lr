@@ -2,6 +2,25 @@ import { NavLink, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home.jsx';
 import Lamps from './pages/Lamps.jsx';
 import Relogio from './pages/Relogio.jsx';
+import { useChrono, chronoDisplayText } from './lib/localChrono.js';
+
+const STATE_LABEL = {
+  idle: 'Parado',
+  preparing: 'Preparando',
+  running: 'Rodando',
+  paused: 'Pausado',
+  finished: 'Finalizado',
+};
+
+function NavChrono() {
+  const snap = useChrono();
+  return (
+    <div className={`nav-sixled ${snap.state}`} title={STATE_LABEL[snap.state]}>
+      <span className="nav-sixled-dot" />
+      <span className="nav-sixled-time">{chronoDisplayText(snap)}</span>
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -14,6 +33,7 @@ export default function App() {
         <NavLink to="/relogios" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           Relógios
         </NavLink>
+        <NavChrono />
       </nav>
       <main className="shell-main">
         <Routes>

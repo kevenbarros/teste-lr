@@ -1,19 +1,26 @@
 {
   "devices": [
     {
-      "id": "COLE_AQUI_O_deviceId",
-      "key": "COLE_AQUI_A_localKey",
-      "ip": "192.168.1.100",
+      "id": "eb601e0068e99f260cvaem",
+      "key": "dd-]8*/=0~s</5b_",
       "version": "3.3",
-      "name": "Lâmpada Sala (Neo)",
+      "name": "Sala porão",
       "switchDp": 20,
       "brightnessDp": 22
     },
     {
-      "id": "OUTRO_deviceId",
-      "key": "OUTRA_localKey",
+      "id": "ebf82f0da07d9037c3knfs",
+      "key": "y.:#~!/2d#uJ@G+x",
+      "version": "3.4",
+      "name": "Quarto saida",
+      "switchDp": 20,
+      "brightnessDp": 22
+    },
+    {
+      "id": "eb810542e9003dc04dq7vp",
+      "key": "oR!rfN^!3kKbM/sb",
       "version": "3.3",
-      "name": "Lâmpada Quarto (Positivo)",
+      "name": "Quarto entrada",
       "switchDp": 20,
       "brightnessDp": 22
     }
