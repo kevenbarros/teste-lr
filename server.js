@@ -203,11 +203,11 @@ app.post('/api/lamps/:id/flicker', (req, res) => {
 
 const findByName = (name) => Object.values(devices).find(e => e.meta.name === name);
 
-app.post('/api/automation/quarto-piscar', async (req, res) => {
+function runQuartoPiscar({ finalOn }) {
   const entrada = findByName('Quarto entrada');
   const saida = findByName('Quarto saida');
   if (!entrada?.device || !saida?.device) {
-    return res.status(400).json({ error: 'Quarto entrada ou Quarto saida não conectada' });
+    throw new Error('Quarto entrada ou Quarto saida não conectada');
   }
 
   stopEffect(entrada);
@@ -239,47 +239,63 @@ app.post('/api/automation/quarto-piscar', async (req, res) => {
     stopEffect(saida);
     await sleep(600);
 
-    const applyWhite = async (entry) => {
+    const applyFinal = async (entry) => {
       const switchDp = entry.meta.switchDp || 20;
-      const modeDp = entry.meta.modeDp || 21;
-      const brightDp = entry.meta.brightnessDp || 22;
-      const tempDp = entry.meta.tempDp || 23;
-      try {
-        await entry.device.set({
-          multiple: true,
-          data: {
-            [switchDp]: true,
-            [modeDp]: 'white',
-            [tempDp]: 0,
-            [brightDp]: 1
-          }
-        });
-      } catch (err) {
-        console.error(`[${entry.meta.name}] erro ao aplicar branco:`, err.message);
+      if (finalOn) {
+        const modeDp = entry.meta.modeDp || 21;
+        const brightDp = entry.meta.brightnessDp || 22;
+        const tempDp = entry.meta.tempDp || 23;
+        try {
+          await entry.device.set({
+            multiple: true,
+            data: {
+              [switchDp]: true,
+              [modeDp]: 'white',
+              [tempDp]: 0,
+              [brightDp]: 1
+            }
+          });
+        } catch (err) {
+          console.error(`[${entry.meta.name}] erro ao aplicar branco:`, err.message);
+        }
+      } else {
+        try {
+          await entry.device.set({ dps: switchDp, set: false });
+        } catch (err) {
+          console.error(`[${entry.meta.name}] erro ao desligar:`, err.message);
+        }
       }
     };
 
-    const ensureOnConfirmed = async (entry, attempts = 6) => {
+    const ensureFinalConfirmed = async (entry, attempts = 6) => {
       const switchDp = entry.meta.switchDp || 20;
       for (let i = 0; i < attempts; i++) {
-        if (entry.on === true) return true;
-        try { await entry.device.set({ dps: switchDp, set: true }); } catch {}
+        if (entry.on === finalOn) return true;
+        try { await entry.device.set({ dps: switchDp, set: finalOn }); } catch {}
         const start = Date.now();
         while (Date.now() - start < 700) {
-          if (entry.on === true) return true;
+          if (entry.on === finalOn) return true;
           await sleep(80);
         }
       }
-      console.error(`[${entry.meta.name}] não confirmou ON após ${attempts} tentativas`);
+      console.error(`[${entry.meta.name}] não confirmou ${finalOn ? 'ON' : 'OFF'} após ${attempts} tentativas`);
       return false;
     };
 
-    await Promise.all([applyWhite(entrada), applyWhite(saida)]);
+    await Promise.all([applyFinal(entrada), applyFinal(saida)]);
     await sleep(300);
-    await Promise.all([ensureOnConfirmed(entrada), ensureOnConfirmed(saida)]);
+    await Promise.all([ensureFinalConfirmed(entrada), ensureFinalConfirmed(saida)]);
   }, 5000);
+}
 
-  res.json({ ok: true, durationMs: 5000 });
+app.post('/api/automation/quarto-piscar', (req, res) => {
+  try { runQuartoPiscar({ finalOn: true }); res.json({ ok: true, durationMs: 5000 }); }
+  catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.post('/api/automation/quarto-piscar-desligar', (req, res) => {
+  try { runQuartoPiscar({ finalOn: false }); res.json({ ok: true, durationMs: 5000 }); }
+  catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 app.post('/api/lamps/:id/stop', (req, res) => {

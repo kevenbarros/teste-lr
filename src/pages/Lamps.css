@@ -34,10 +34,38 @@
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 1rem;
+  cursor: grab;
+  transition: border-color .15s, opacity .15s, transform .15s, box-shadow .15s;
 }
+.lamp-card:active     { cursor: grabbing; }
+.lamp-card.dragging   { opacity: 0.45; transform: scale(0.98); }
+.lamp-card.drop-target {
+  border-color: #81D332;
+  box-shadow: 0 0 0 2px #81D33255, 0 0 18px #81D33233;
+}
+.lamp-card.automation { cursor: default; }
+.lamp-card.automation:active { cursor: default; }
 
 .lamp-card.offline { opacity: 0.6; }
 .lamp-card.automation { margin-bottom: 1.5rem; }
+
+.lamp-drag-handle {
+  color: #4a5060;
+  font-size: 1.1rem;
+  letter-spacing: -2px;
+  cursor: grab;
+  user-select: none;
+  padding-right: 0.25rem;
+}
+.lamp-drag-handle:active { cursor: grabbing; }
+.lamp-card.automation .lamp-drag-handle { display: none; }
+
+/* Inputs and buttons should stay clickable while the card is draggable. */
+.lamp-card button,
+.lamp-card input,
+.lamp-card label { cursor: auto; }
+.lamp-card button { cursor: pointer; }
+.lamp-card button:disabled { cursor: not-allowed; }
 
 .lamp-card-header {
   display: flex;

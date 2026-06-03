@@ -1,10 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { lampsApi as api } from '../lib/lampsApi.js';
 import './Lamps.css';
+
+const ORDER_KEY = 'lamps:order';
+
+function loadOrder() {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveOrder(ids) {
+  try { localStorage.setItem(ORDER_KEY, JSON.stringify(ids)); } catch {}
+}
+
+function sortByOrder(lamps, order) {
+  const idx = new Map(order.map((id, i) => [id, i]));
+  return [...lamps].sort((a, b) => {
+    const ai = idx.has(a.id) ? idx.get(a.id) : Infinity;
+    const bi = idx.has(b.id) ? idx.get(b.id) : Infinity;
+    return ai - bi;
+  });
+}
 
 export default function Lamps() {
   const [lamps, setLamps] = useState([]);
   const [error, setError] = useState(null);
+  const [order, setOrder] = useState(loadOrder);
+  const [dragId, setDragId] = useState(null);
+  const [overId, setOverId] = useState(null);
 
   const refresh = async () => {
     try {
@@ -22,14 +47,39 @@ export default function Lamps() {
     return () => clearInterval(t);
   }, []);
 
+  const sortedLamps = useMemo(() => sortByOrder(lamps, order), [lamps, order]);
+
+  function handleReorder(fromId, toId) {
+    if (!fromId || !toId || fromId === toId) return;
+    const ids = sortedLamps.map(l => l.id);
+    const fromIdx = ids.indexOf(fromId);
+    const toIdx = ids.indexOf(toId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const next = [...ids];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    setOrder(next);
+    saveOrder(next);
+  }
+
   return (
     <div className="lamps-page">
       <h1>Minhas lâmpadas</h1>
       {error && <div className="lamps-error">Erro: {error}</div>}
       <QuartoAutomation />
       <div className="lamps-grid">
-        {lamps.map(lamp => (
-          <LampCard key={lamp.id} lamp={lamp} onChange={refresh} />
+        {sortedLamps.map(lamp => (
+          <LampCard
+            key={lamp.id}
+            lamp={lamp}
+            onChange={refresh}
+            dragging={dragId === lamp.id}
+            dropTarget={overId === lamp.id && dragId && dragId !== lamp.id}
+            onDragStart={() => setDragId(lamp.id)}
+            onDragEnd={() => { setDragId(null); setOverId(null); }}
+            onDragOver={() => setOverId(lamp.id)}
+            onDrop={(fromId) => handleReorder(fromId, lamp.id)}
+          />
         ))}
       </div>
       {lamps.length === 0 && !error && <p>Carregando...</p>}
@@ -38,16 +88,16 @@ export default function Lamps() {
 }
 
 function QuartoAutomation() {
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState(null);
 
-  const start = async () => {
-    setRunning(true);
+  const run = async (label, fn) => {
+    setRunning(label);
     try {
-      await api.quartoPiscar();
-      setTimeout(() => setRunning(false), 5200);
+      await fn();
+      setTimeout(() => setRunning(null), 5200);
     } catch (err) {
       alert(err.message);
-      setRunning(false);
+      setRunning(null);
     }
   };
 
@@ -56,17 +106,20 @@ function QuartoAutomation() {
       <div className="lamp-card-header">
         <h2>Automação Quarto (entrada + saída)</h2>
       </div>
-      <p>Pisca por 5s (entrada 100ms / saída 200ms), depois liga em branco com brilho mínimo.</p>
+      <p>Pisca por 5s (entrada 100ms / saída 200ms) e termina no estado escolhido.</p>
       <div className="lamp-row">
-        <button disabled={running} onClick={start}>
-          {running ? 'Executando...' : 'Iniciar piscar 5s'}
+        <button disabled={!!running} onClick={() => run('on', api.quartoPiscar)}>
+          {running === 'on' ? 'Executando...' : 'Piscar e acender'}
+        </button>
+        <button disabled={!!running} onClick={() => run('off', api.quartoPiscarDesligar)}>
+          {running === 'off' ? 'Executando...' : 'Piscar e desligar'}
         </button>
       </div>
     </div>
   );
 }
 
-function LampCard({ lamp, onChange }) {
+function LampCard({ lamp, onChange, dragging, dropTarget, onDragStart, onDragEnd, onDragOver, onDrop }) {
   const [busy, setBusy] = useState(false);
   const [blinkMs, setBlinkMs] = useState(500);
   const [blinkDurationS, setBlinkDurationS] = useState(5);
@@ -78,9 +131,32 @@ function LampCard({ lamp, onChange }) {
     onChange();
   };
 
+  const cardClass = [
+    'lamp-card',
+    lamp.connected ? 'online' : 'offline',
+    dragging ? 'dragging' : '',
+    dropTarget ? 'drop-target' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className={`lamp-card ${lamp.connected ? 'online' : 'offline'}`}>
+    <div
+      className={cardClass}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/lamp-id', lamp.id);
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart?.();
+      }}
+      onDragEnd={() => onDragEnd?.()}
+      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver?.(); }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const fromId = e.dataTransfer.getData('text/lamp-id');
+        onDrop?.(fromId);
+      }}
+    >
       <div className="lamp-card-header">
+        <span className="lamp-drag-handle" title="Arraste para reordenar">⋮⋮</span>
         <h2>{lamp.name}</h2>
         <span className={`lamp-status ${lamp.connected ? 'ok' : 'bad'}`}>
           {lamp.connected ? 'conectada' : 'desconectada'}

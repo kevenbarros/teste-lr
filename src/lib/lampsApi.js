@@ -22,5 +22,6 @@ export const lampsApi = {
   blink: (id, intervalMs, durationMs) => postJson(`/lamps/${id}/blink`, { intervalMs, durationMs }),
   flicker: (id) => postJson(`/lamps/${id}/flicker`),
   stop: (id) => postJson(`/lamps/${id}/stop`),
-  quartoPiscar: () => postJson('/automation/quarto-piscar')
+  quartoPiscar: () => postJson('/automation/quarto-piscar'),
+  quartoPiscarDesligar: () => postJson('/automation/quarto-piscar-desligar'),
 };
