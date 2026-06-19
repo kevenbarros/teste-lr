@@ -3,7 +3,9 @@
     "allow": [
       "Bash(findstr /i devices)",
       "Bash(git -C \"c:\\\\Users\\\\keven\\\\OneDrive\\\\Área de Trabalho\\\\keven\\\\lampada-relogio\" diff devices.example.json)",
-      "Bash(curl -s --max-time 6 \"http://localhost:5858/api/sixled/status\")"
+      "Bash(curl -s --max-time 6 \"http://localhost:5858/api/sixled/status\")",
+      "Bash(ls \"c:\\\\Users\\\\keven\\\\Desktop\\\\projetos\\\\teste-lr\\\\node_modules\" 2>nul | head -5; echo \"---\"; ls \"c:\\\\Users\\\\keven\\\\Desktop\")",
+      "Read(//c/Users/keven/Desktop/**)"
     ]
   }
 }
