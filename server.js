@@ -144,6 +144,7 @@ app.post('/api/lamps/:id/blink', (req, res) => {
   stopEffect(entry);
   const intervalMs = Math.max(100, Math.min(5000, Number(req.body.intervalMs) || 500));
   const durationMs = Math.max(0, Number(req.body.durationMs) || 0);
+  const endOn = !!req.body.endOn;
   const dp = entry.meta.switchDp || 20;
   let state = false;
   const handle = setInterval(() => {
@@ -156,7 +157,23 @@ app.post('/api/lamps/:id/blink', (req, res) => {
     endTimer = setTimeout(async () => {
       clearInterval(handle);
       entry.effect = null;
-      try { await entry.device.set({ dps: dp, set: false }); } catch {}
+      // Retry the final state until success — same robustness as flicker.
+      const deadline = Date.now() + 3000;
+      let ok = false;
+      while (Date.now() < deadline && !ok) {
+        try {
+          await entry.device.set({ dps: dp, set: endOn });
+          ok = true;
+        } catch {
+          await sleep(150);
+        }
+      }
+      if (ok) {
+        await sleep(150);
+        try { await entry.device.set({ dps: dp, set: endOn }); } catch {}
+      } else {
+        console.error(`[${entry.meta.name}] blink-end: falha ao confirmar ${endOn ? 'ON' : 'OFF'} após 3s`);
+      }
     }, durationMs);
   }
 
@@ -165,7 +182,7 @@ app.post('/api/lamps/:id/blink', (req, res) => {
     handle,
     stop: () => { if (endTimer) clearTimeout(endTimer); },
   };
-  res.json({ ok: true, intervalMs, durationMs });
+  res.json({ ok: true, intervalMs, durationMs, endOn });
 });
 
 app.post('/api/lamps/:id/flicker', (req, res) => {
@@ -174,29 +191,60 @@ app.post('/api/lamps/:id/flicker', (req, res) => {
   stopEffect(entry);
   const dp = entry.meta.switchDp || 20;
   const brightDp = entry.meta.brightnessDp || 22;
+  // Tuya brightness range is 10..1000; we clamp the flicker to 1%..10% (10..100).
+  const MIN_BRIGHT = 10;
+  const MAX_BRIGHT = 100;
   let alive = true;
 
+  const myEffect = { type: 'flicker', stop: () => { alive = false; } };
+  entry.effect = myEffect;
+
   const loop = async () => {
-    while (alive) {
-      const burst = 3 + Math.floor(Math.random() * 6);
-      for (let i = 0; i < burst && alive; i++) {
-        const on = Math.random() > 0.3;
-        const brightness = 10 + Math.floor(Math.random() * 990);
-        try {
-          await entry.device.set({ multiple: true, data: { [dp]: on, [brightDp]: brightness } });
-        } catch {}
-        await sleep(30 + Math.floor(Math.random() * 180));
+    try {
+      while (alive) {
+        const burst = 3 + Math.floor(Math.random() * 6);
+        for (let i = 0; i < burst && alive; i++) {
+          const on = Math.random() > 0.3;
+          const brightness = MIN_BRIGHT + Math.floor(Math.random() * (MAX_BRIGHT - MIN_BRIGHT + 1));
+          try {
+            await entry.device.set({ multiple: true, data: { [dp]: on, [brightDp]: brightness } });
+          } catch {}
+          await sleep(30 + Math.floor(Math.random() * 180));
+        }
+        if (alive) {
+          try {
+            await entry.device.set({ multiple: true, data: { [dp]: true, [brightDp]: MIN_BRIGHT } });
+          } catch {}
+          await sleep(1500 + Math.floor(Math.random() * 3500));
+        }
       }
-      if (alive) {
+    } finally {
+      // Guarantee final state: on, brightness 1%. Retry for up to 3s through
+      // network glitches, then double-tap on success (some bulbs swallow the
+      // first command). Abort if a new effect has replaced ours in the meantime.
+      const finalData = { [dp]: true, [brightDp]: MIN_BRIGHT };
+      const supplanted = () => entry.effect && entry.effect !== myEffect;
+      const deadline = Date.now() + 3000;
+      let ok = false;
+      while (Date.now() < deadline && !ok) {
+        if (supplanted()) return;
         try {
-          await entry.device.set({ multiple: true, data: { [dp]: true, [brightDp]: 1000 } });
-        } catch {}
-        await sleep(1500 + Math.floor(Math.random() * 3500));
+          await entry.device.set({ multiple: true, data: finalData });
+          ok = true;
+        } catch {
+          await sleep(150);
+        }
+      }
+      if (ok) {
+        await sleep(150);
+        if (supplanted()) return;
+        try { await entry.device.set({ multiple: true, data: finalData }); } catch {}
+      } else {
+        console.error(`[${entry.meta.name}] flicker-end: falha ao confirmar 1% após 3s`);
       }
     }
   };
 
-  entry.effect = { type: 'flicker', stop: () => { alive = false; } };
   loop();
   res.json({ ok: true });
 });

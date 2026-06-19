@@ -198,9 +198,16 @@ function LampCard({ lamp, onChange, dragging, dropTarget, onDragStart, onDragEnd
       </div>
 
       <div className="lamp-row">
-        <button disabled={busy} onClick={() => run(() => api.blink(lamp.id, blinkMs, blinkDurationS * 1000))}>
-          {blinkDurationS > 0 ? `Piscar ${blinkDurationS}s e desligar` : 'Piscar'}
+        <button disabled={busy}
+          onClick={() => run(() => api.blink(lamp.id, blinkMs, blinkDurationS * 1000, false))}>
+          {blinkDurationS > 0 ? `Piscar ${blinkDurationS}s e desligar` : 'Piscar (desliga)'}
         </button>
+        <button disabled={busy}
+          onClick={() => run(() => api.blink(lamp.id, blinkMs, blinkDurationS * 1000, true))}>
+          {blinkDurationS > 0 ? `Piscar ${blinkDurationS}s e ligar` : 'Piscar (liga)'}
+        </button>
+      </div>
+      <div className="lamp-row">
         <button disabled={busy} onClick={() => run(() => api.flicker(lamp.id))}>
           Falhando (flicker)
         </button>
