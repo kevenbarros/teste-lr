@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildSixledApi } from '../lib/sixledApi.js';
 import {
   useChrono, chronoDisplayText, startChrono, pauseChrono, stopChrono, restartChrono,
-  addChronoTime, getChronoSnapshot, msToHHMMSS,
+  addChronoTime,
 } from '../lib/localChrono.js';
 import './Relogio.css';
 
@@ -86,18 +86,11 @@ export default function Relogio() {
     finally { setBusy(false); setTimeout(() => setLastCmd(null), 1500); }
   }
 
-  async function handleAddTime(minutes) {
-    const extraMs = minutes * 60 * 1000;
-    addChronoTime(extraMs);
-    const snap = getChronoSnapshot();
-    const tp1 = msToHHMMSS(snap.remainingMs);
-    const shouldRestart = snap.state === 'running' || snap.state === 'preparing' || snap.state === 'finished';
-
-    setLastCmd(`+${minutes} min`);
+  async function handleAdd30Seconds() {
+    addChronoTime(30 * 1000);
+    setLastCmd('+30s');
     setBusy(true);
-    try {
-      await api.extend(tp1, shouldRestart);
-    } catch {}
+    try { await api.cmd(7); await fetchStatus(); }
     finally {
       setBusy(false);
       setTimeout(() => setLastCmd(null), 1500);
@@ -231,12 +224,10 @@ export default function Relogio() {
         </div>
 
         <div className="rl-addtime-row">
-          {[1, 5, 10].map(min => (
-            <button key={min} className="rl-addtime-btn"
-              onClick={() => handleAddTime(min)} disabled={busy}>
-              +{min} min
-            </button>
-          ))}
+          <button className="rl-addtime-btn"
+            onClick={handleAdd30Seconds} disabled={busy}>
+            +30s
+          </button>
         </div>
 
         <div className="rl-sliders">
