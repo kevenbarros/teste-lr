@@ -97,6 +97,17 @@ export default function Relogio() {
     }
   }
 
+  async function handleSub30Seconds() {
+    addChronoTime(-30 * 1000);
+    setLastCmd('-30s');
+    setBusy(true);
+    try { await api.cmd(17); await fetchStatus(); }
+    finally {
+      setBusy(false);
+      setTimeout(() => setLastCmd(null), 1500);
+    }
+  }
+
   const commitBrightness = (e) => { void api.par(1, e.currentTarget.value); };
   const commitVolume = (e) => { void api.par(3, e.currentTarget.value); };
   const togglePower = () => {
@@ -224,6 +235,10 @@ export default function Relogio() {
         </div>
 
         <div className="rl-addtime-row">
+          <button className="rl-addtime-btn"
+            onClick={handleSub30Seconds} disabled={busy}>
+            −30s
+          </button>
           <button className="rl-addtime-btn"
             onClick={handleAdd30Seconds} disabled={busy}>
             +30s
