@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home.jsx';
 import Lamps from './pages/Lamps.jsx';
 import Relogio from './pages/Relogio.jsx';
+import PlanoB from './pages/PlanoB.jsx';
 import { useChrono, chronoDisplayText } from './lib/localChrono.js';
 
 const STATE_LABEL = {
@@ -33,6 +34,9 @@ export default function App() {
         <NavLink to="/relogios" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           Relógios
         </NavLink>
+        <NavLink to="/plano-b" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          Plano B
+        </NavLink>
         <NavChrono />
       </nav>
       <main className="shell-main">
@@ -40,6 +44,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/lampadas" element={<Lamps />} />
           <Route path="/relogios" element={<Relogio />} />
+          <Route path="/plano-b" element={<PlanoB />} />
           <Route path="*" element={<Home />} />
         </Routes>
       </main>

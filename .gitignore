@@ -1,6 +1,8 @@
 node_modules/
 dist/
 devices.json
+ir-local.json
+ir-codes-local.json
 .env
 .env.local
 .DS_Store

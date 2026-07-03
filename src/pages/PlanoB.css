@@ -1,0 +1,124 @@
+.planob-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.planob-page h1 {
+  margin-bottom: 0.25rem;
+}
+
+.planob-sub {
+  color: #9aa4b2;
+  margin: 0 0 1rem;
+}
+
+.planob-status {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+.planob-status.ok { color: #7fe0a0; }
+.planob-status.bad { color: #e0b35a; }
+
+.planob-card {
+  background: #1b1f27;
+  border: 1px solid #2b313d;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.planob-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.planob-hint {
+  color: #9aa4b2;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.planob-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.planob-row button {
+  flex: 1 1 160px;
+  padding: 0.8rem 1rem;
+  border: 0;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.planob-row button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.planob-row button:not(:disabled):hover {
+  filter: brightness(1.12);
+}
+
+.planob-row button.learn { background: #3b4252; }
+.planob-row button.action.on { background: #2e9e54; }
+.planob-row button.action.off { background: #b04545; }
+.planob-row button.action.blink { background: #c79a2b; }
+.planob-row button.action.stop { background: #555b66; }
+
+.planob-blinking {
+  font-size: 0.8rem;
+  color: #f0c64a;
+  margin-left: 0.5rem;
+  animation: planob-pulse 1s steps(2, start) infinite;
+}
+@keyframes planob-pulse { 50% { opacity: 0.25; } }
+
+.planob-slider {
+  margin: 0.5rem 0 1rem;
+}
+.planob-slider label {
+  display: block;
+  color: #c7ccd4;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+.planob-slider input[type="range"] {
+  width: 100%;
+  accent-color: #c79a2b;
+}
+.planob-slider-ends {
+  display: flex;
+  justify-content: space-between;
+  color: #8a93a0;
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+.planob-error {
+  background: #3a1d1d;
+  border: 1px solid #6b2b2b;
+  color: #ffb4b4;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.planob-error code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.planob-ok {
+  margin-top: 0.75rem;
+  color: #7fe0a0;
+  font-size: 0.9rem;
+}

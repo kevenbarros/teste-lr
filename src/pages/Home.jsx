@@ -18,6 +18,11 @@ export default function Home() {
           <h2>Relógios SIXLED</h2>
           <p>Controle sincronizado dos cronômetros WiFi (start/pause/stop, brilho, volume, config).</p>
         </Link>
+        <Link to="/plano-b" className="home-card planob">
+          <div className="home-card-icon">📡</div>
+          <h2>Fita de LED (Plano B)</h2>
+          <p>Liga, desliga e pisca a fita via Smart IR direto na rede Wi-Fi (tuyapi) — sem nuvem.</p>
+        </Link>
       </div>
     </div>
   );

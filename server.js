@@ -1,9 +1,10 @@
 import express from 'express';
 import TuyAPI from 'tuyapi';
 import net from 'node:net';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createLocalIr } from './irLocal.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 5858;
@@ -354,6 +355,191 @@ app.post('/api/lamps/:id/stop', (req, res) => {
 });
 
 // ════════════════════════════════════════════════════════════════════════════
+//  Smart IR LOCAL (sem nuvem) via tuyapi
+// ════════════════════════════════════════════════════════════════════════════
+
+const irLocalCfgPath = join(__dirname, 'ir-local.json');
+const irLocalCodesPath = join(__dirname, 'ir-codes-local.json');
+
+let irLocal = null;
+if (existsSync(irLocalCfgPath)) {
+  try {
+    const cfg = JSON.parse(readFileSync(irLocalCfgPath, 'utf-8'));
+    if (cfg.key && !/COLE_AQUI/.test(cfg.key)) {
+      irLocal = createLocalIr(cfg);
+      irLocal.ensureConnected()
+        .then(() => console.log('[IR-local] conectado ao Smart IR'))
+        .catch((e) => console.warn('[IR-local] ainda não conectado:', e.message));
+    } else {
+      console.warn('[IR-local] ir-local.json sem local key — preencha "key".');
+    }
+  } catch (err) {
+    console.error('[IR-local] ir-local.json inválido:', err.message);
+  }
+} else {
+  console.warn('[IR-local] ir-local.json não encontrado — aba Plano B desativada.');
+}
+
+function loadLocalCodes() {
+  if (!existsSync(irLocalCodesPath)) return { devices: {} };
+  try {
+    const d = JSON.parse(readFileSync(irLocalCodesPath, 'utf-8'));
+    return { devices: d.devices || {} };
+  } catch {
+    return { devices: {} };
+  }
+}
+function saveLocalCodes(store) {
+  writeFileSync(irLocalCodesPath, JSON.stringify(store, null, 2));
+}
+
+// Sinaliza que um aprendizado está em curso, para o /status não reconectar
+// no meio do study mode (o blaster só aceita 1 conexão TCP por vez).
+let irLocalBusy = false;
+// Efeito ativo (ex.: piscar) — { handle, type, intervalMs }.
+let irLocalEffect = null;
+
+const requireIrLocal = (res) => {
+  if (!irLocal) {
+    res.status(503).json({ error: 'Plano B não configurado (falta ir-local.json com a local key)' });
+    return false;
+  }
+  return true;
+};
+
+app.get('/api/ir-local/status', async (req, res) => {
+  const store = loadLocalCodes();
+  const devices = Object.fromEntries(
+    Object.entries(store.devices).map(([id, d]) => [id, { name: d.name, keys: Object.keys(d.keys || {}) }])
+  );
+  // O blaster derruba conexões ociosas; reconectamos sob demanda para reportar
+  // o estado real (a menos que um aprendizado esteja rodando).
+  let connected = false;
+  if (irLocal && !irLocalBusy) {
+    try { await irLocal.ensureConnected(); connected = irLocal.isConnected(); } catch { connected = false; }
+  } else if (irLocal) {
+    connected = irLocal.isConnected();
+  }
+  res.json({ configured: !!irLocal, connected, devices, effect: irLocalEffect?.type || null, intervalMs: irLocalEffect?.intervalMs || null });
+});
+
+app.post('/api/ir-local/learn', async (req, res) => {
+  if (!requireIrLocal(res)) return;
+  const device = String(req.body.device || 'fita-led');
+  const deviceName = String(req.body.deviceName || 'Fita de LED');
+  const key = String(req.body.key || '').trim();
+  if (!key) return res.status(400).json({ error: 'informe "key" (ex: on, off)' });
+
+  stopIrLocalEffect();
+  irLocalBusy = true;
+  try {
+    await irLocal.ensureConnected();
+    const since = Date.now();
+    await irLocal.enterStudy();
+
+    let code = null;
+    let i = 0;
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      await sleep(800);
+      if (irLocal.state.lastCode && irLocal.state.lastCodeAt >= since) {
+        code = irLocal.state.lastCode;
+        break;
+      }
+      // O blaster derruba a conexão ociosa e sai do modo estudo; re-armamos a
+      // cada ~5,6s (reconectando se preciso) para não perder a tecla.
+      if (++i % 7 === 0) {
+        try { await irLocal.ensureConnected(); await irLocal.enterStudy(); } catch { /* tenta de novo no próximo ciclo */ }
+      }
+    }
+    await irLocal.exitStudy().catch(() => {});
+
+    if (!code) {
+      return res.status(408).json({
+        error: 'Nenhum código capturado em 30s. Aponte o controle da fita para o Smart IR e pressione o botão durante o aprendizado.',
+      });
+    }
+
+    const store = loadLocalCodes();
+    store.devices[device] = store.devices[device] || { name: deviceName, keys: {} };
+    store.devices[device].name = deviceName;
+    store.devices[device].keys[key] = code;
+    saveLocalCodes(store);
+    res.json({ ok: true, device, key });
+  } catch (err) {
+    await irLocal.exitStudy().catch(() => {});
+    res.status(500).json({ error: err.message });
+  } finally {
+    irLocalBusy = false;
+  }
+});
+
+app.post('/api/ir-local/send', async (req, res) => {
+  if (!requireIrLocal(res)) return;
+  const device = String(req.body.device || 'fita-led');
+  const key = String(req.body.key || '').trim();
+  const store = loadLocalCodes();
+  const code = store.devices[device]?.keys?.[key];
+  if (!code) return res.status(404).json({ error: `código "${key}" não aprendido para "${device}"` });
+  stopIrLocalEffect();
+  try {
+    await irLocal.ensureConnected();
+    await irLocal.sendCode(code);
+    res.json({ ok: true, device, key });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/ir-local/codes/:device/:key', (req, res) => {
+  const store = loadLocalCodes();
+  const dev = store.devices[req.params.device];
+  if (dev?.keys) delete dev.keys[req.params.key];
+  saveLocalCodes(store);
+  res.json({ ok: true });
+});
+
+// Pisca a fita alternando os códigos ON/OFF num intervalo configurável.
+function stopIrLocalEffect() {
+  if (irLocalEffect?.handle) clearInterval(irLocalEffect.handle);
+  irLocalEffect = null;
+}
+
+app.post('/api/ir-local/blink', (req, res) => {
+  if (!requireIrLocal(res)) return;
+  const device = String(req.body.device || 'fita-led');
+  const intervalMs = Math.max(300, Math.min(10000, Number(req.body.intervalMs) || 800));
+  const store = loadLocalCodes();
+  const onCode = store.devices[device]?.keys?.on;
+  const offCode = store.devices[device]?.keys?.off;
+  if (!onCode || !offCode) {
+    return res.status(404).json({ error: 'aprenda os botões "on" e "off" antes de piscar' });
+  }
+
+  stopIrLocalEffect();
+  irLocalBusy = true; // o efeito é dono da conexão; impede o /status de reconectar e brigar
+
+  let on = false;
+  const tick = async () => {
+    on = !on;
+    try {
+      await irLocal.ensureConnected();
+      await irLocal.sendCode(on ? onCode : offCode);
+    } catch { /* ignora glitch; próximo tick tenta de novo */ }
+  };
+  const handle = setInterval(tick, intervalMs);
+  irLocalEffect = { handle, type: 'blink', intervalMs };
+  tick(); // primeiro disparo imediato
+  res.json({ ok: true, intervalMs });
+});
+
+app.post('/api/ir-local/stop', (req, res) => {
+  stopIrLocalEffect();
+  irLocalBusy = false;
+  res.json({ ok: true });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
 //  SIXLED (relógios ESP8266)
 // ════════════════════════════════════════════════════════════════════════════
 //
@@ -493,14 +679,31 @@ function sixledPageGet(device, path) {
 function sixledFormPost(device, path, body) {
   return sixledEnqueue(device.ip, async () => {
     try {
-      await sixledLogin(device);
-      const r = await sixledTcpFetch(device.ip, path, {
+      const login = await sixledTcpFetch(device.ip, '/valid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `senha=${encodeURIComponent(device.password)}`,
+      });
+      console.log(`[sixled ${device.ip}] LOGIN status=${login.status} body=${login.body.slice(0, 200).replace(/\s+/g, ' ')}`);
+
+      const r = await sixledTcpFetch(device.ip, path, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Origin': `http://${device.ip}`,
+          'Referer': `http://${device.ip}/index`,
+          'Upgrade-Insecure-Requests': '1',
+        },
         body,
       });
+      console.log(`[sixled ${device.ip}] POST ${path} status=${r.status} body=${r.body.slice(0, 400).replace(/\s+/g, ' ')}`);
+      console.log(`[sixled ${device.ip}] sent body: ${body}`);
       return r.status < 400;
-    } catch { return false; }
+    } catch (e) {
+      console.log(`[sixled ${device.ip}] ERROR ${e.message}`);
+      return false;
+    }
   });
 }
 
@@ -565,7 +768,7 @@ function buildSixledFormData(cfg) {
   if (cfg.bpt) p.set('bpt', 'on');
   if (cfg.bp1) p.set('bp1', 'on');
   if (cfg.bi1) p.set('bi1', 'on');
-  p.set('sv', 'Salvar');
+  p.set('sv', '&#128190; Salvar');
   if (cfg.eh) p.set('eh', 'on');
   p.set('tph', cfg.tph);
   if (cfg.ed) p.set('ed', 'on');

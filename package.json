@@ -9,7 +9,11 @@
     "dev:api": "node --watch server.js",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server.js"
+    "start": "node server.js",
+    "ir:scan": "node scripts/ir-scan.js",
+    "ir:debug": "node scripts/ir-debug.js",
+    "ir:learn:on": "node scripts/ir-learn.js on",
+    "ir:learn:off": "node scripts/ir-learn.js off"
   },
   "dependencies": {
     "express": "^4.21.1",
