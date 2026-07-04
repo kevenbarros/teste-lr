@@ -565,16 +565,20 @@ app.post('/api/sound/stop', (req, res) => {
 });
 
 app.post('/api/sound/volume', (req, res) => {
-  res.json(sound.setVolume(req.body?.volume));
+  try {
+    res.json(sound.setVolume(req.body?.volume, req.body?.device));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.get('/api/sound/devices', async (req, res) => {
   res.json({ devices: await sound.listDevices(), ...sound.status() });
 });
 
-app.post('/api/sound/device', (req, res) => {
+app.post('/api/sound/outputs', (req, res) => {
   try {
-    res.json(sound.setDevice(req.body?.device));
+    res.json(sound.setOutputs(req.body?.outputs));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

@@ -60,23 +60,56 @@
 .sons-stop:disabled { opacity: 0.4; cursor: not-allowed; }
 .sons-stop:not(:disabled):hover { filter: brightness(1.12); }
 
-/* Seletor de dispositivo de saída */
+/* Seletor de caixas de saída (múltiplas) */
 .sons-device {
   flex: 1 1 280px;
   color: #c7ccd4;
   font-size: 0.9rem;
 }
-.sons-device select {
+.sons-device-title {
   display: block;
-  width: 100%;
-  margin-top: 0.4rem;
-  padding: 0.55rem 0.7rem;
-  background: #12151b;
-  color: #dfe4ea;
-  border: 1px solid #2b313d;
+  margin-bottom: 0.5rem;
+}
+.sons-out {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid transparent;
   border-radius: 8px;
-  font-size: 0.95rem;
+}
+.sons-out.on {
+  background: #12151b;
+  border-color: #2b313d;
+}
+.sons-out + .sons-out { margin-top: 0.35rem; }
+.sons-out-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #dfe4ea;
   cursor: pointer;
+  user-select: none;
+  flex: 1 1 220px;
+}
+.sons-out-check input { width: 1.05rem; height: 1.05rem; accent-color: #2e9e54; cursor: pointer; }
+.sons-out-offline { color: #e0b35a; font-size: 0.8rem; }
+.sons-out-vol {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 180px;
+}
+.sons-out-vol input[type="range"] {
+  flex: 1;
+  accent-color: #2e9e54;
+}
+.sons-out-pct {
+  color: #9aa4b2;
+  font-size: 0.85rem;
+  min-width: 2.8rem;
+  text-align: right;
 }
 .sons-refresh {
   padding: 0.55rem 1rem;
@@ -91,7 +124,7 @@
 .sons-refresh:disabled { opacity: 0.5; cursor: wait; }
 .sons-refresh:not(:disabled):hover { filter: brightness(1.12); }
 
-/* Controles: volume + loop */
+/* Cards de controles (caixas / loop) */
 .sons-controls {
   display: flex;
   align-items: center;
@@ -103,17 +136,7 @@
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
 }
-.sons-vol {
-  flex: 1 1 240px;
-  color: #c7ccd4;
-  font-size: 0.9rem;
-}
-.sons-vol input[type="range"] {
-  display: block;
-  width: 100%;
-  margin-top: 0.4rem;
-  accent-color: #2e9e54;
-}
+.sons-device-card { align-items: flex-start; }
 .sons-loop {
   display: flex;
   align-items: center;
