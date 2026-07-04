@@ -13,7 +13,9 @@
     "ir:scan": "node scripts/ir-scan.js",
     "ir:debug": "node scripts/ir-debug.js",
     "ir:learn:on": "node scripts/ir-learn.js on",
-    "ir:learn:off": "node scripts/ir-learn.js off"
+    "ir:learn:off": "node scripts/ir-learn.js off",
+    "gen:beep": "node scripts/gen-beep.js",
+    "sound:test": "node -e \"import('./soundPlayer.js').then(m=>m.playAlert())\""
   },
   "dependencies": {
     "express": "^4.21.1",

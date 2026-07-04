@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createLocalIr } from './irLocal.js';
+import * as sound from './soundPlayer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 5858;
@@ -516,8 +517,11 @@ app.post('/api/ir-local/blink', (req, res) => {
     return res.status(404).json({ error: 'aprenda os botões "on" e "off" antes de piscar' });
   }
 
+  const wasRunning = !!irLocalEffect; // "Atualizar velocidade" (já piscando) x "Iniciar piscar"
   stopIrLocalEffect();
   irLocalBusy = true; // o efeito é dono da conexão; impede o /status de reconectar e brigar
+
+  if (!wasRunning) sound.playAlert(); // som só ao iniciar o piscar, na SoundCore 2
 
   let on = false;
   const tick = async () => {
@@ -537,6 +541,43 @@ app.post('/api/ir-local/stop', (req, res) => {
   stopIrLocalEffect();
   irLocalBusy = false;
   res.json({ ok: true });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SOM na caixa (SoundCore 2) — ver soundPlayer.js
+// ════════════════════════════════════════════════════════════════════════════
+
+app.get('/api/sound/list', (req, res) => {
+  res.json({ sounds: sound.listSounds(), ...sound.status() });
+});
+
+app.post('/api/sound/play', (req, res) => {
+  try {
+    const { file, volume, loop } = req.body || {};
+    res.json(sound.play({ file, volume, loop: !!loop }));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/sound/stop', (req, res) => {
+  res.json(sound.stop());
+});
+
+app.post('/api/sound/volume', (req, res) => {
+  res.json(sound.setVolume(req.body?.volume));
+});
+
+app.get('/api/sound/devices', async (req, res) => {
+  res.json({ devices: await sound.listDevices(), ...sound.status() });
+});
+
+app.post('/api/sound/device', (req, res) => {
+  try {
+    res.json(sound.setDevice(req.body?.device));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ════════════════════════════════════════════════════════════════════════════

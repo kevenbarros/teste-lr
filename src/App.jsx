@@ -3,6 +3,7 @@ import Home from './pages/Home.jsx';
 import Lamps from './pages/Lamps.jsx';
 import Relogio from './pages/Relogio.jsx';
 import PlanoB from './pages/PlanoB.jsx';
+import Sons from './pages/Sons.jsx';
 import { useChrono, chronoDisplayText } from './lib/localChrono.js';
 
 const STATE_LABEL = {
@@ -37,6 +38,9 @@ export default function App() {
         <NavLink to="/plano-b" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           Plano B
         </NavLink>
+        <NavLink to="/sons" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          Sons
+        </NavLink>
         <NavChrono />
       </nav>
       <main className="shell-main">
@@ -45,6 +49,7 @@ export default function App() {
           <Route path="/lampadas" element={<Lamps />} />
           <Route path="/relogios" element={<Relogio />} />
           <Route path="/plano-b" element={<PlanoB />} />
+          <Route path="/sons" element={<Sons />} />
           <Route path="*" element={<Home />} />
         </Routes>
       </main>

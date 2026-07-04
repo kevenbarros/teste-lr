@@ -1,0 +1,164 @@
+.sons-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.sons-page h1 { margin-bottom: 0.25rem; }
+
+.sons-sub {
+  color: #9aa4b2;
+  margin: 0 0 1rem;
+}
+
+.sons-error {
+  background: #3a1d1d;
+  border: 1px solid #6b2b2b;
+  color: #ffb4b4;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+/* Barra de status "tocando agora" */
+.sons-now {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #1b1f27;
+  border: 1px solid #2b313d;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  color: #9aa4b2;
+  font-size: 0.95rem;
+}
+.sons-now.on { color: #7fe0a0; border-color: #2e5e42; }
+.sons-now strong { color: #dfe4ea; }
+
+.sons-badge {
+  margin-left: 0.5rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #2b6cb0;
+  color: #fff;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+
+.sons-stop {
+  margin-left: auto;
+  padding: 0.5rem 1.1rem;
+  border: 0;
+  border-radius: 8px;
+  background: #b04545;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sons-stop:disabled { opacity: 0.4; cursor: not-allowed; }
+.sons-stop:not(:disabled):hover { filter: brightness(1.12); }
+
+/* Seletor de dispositivo de saída */
+.sons-device {
+  flex: 1 1 280px;
+  color: #c7ccd4;
+  font-size: 0.9rem;
+}
+.sons-device select {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.55rem 0.7rem;
+  background: #12151b;
+  color: #dfe4ea;
+  border: 1px solid #2b313d;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.sons-refresh {
+  padding: 0.55rem 1rem;
+  border: 1px solid #2b313d;
+  border-radius: 8px;
+  background: #3b4252;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+}
+.sons-refresh:disabled { opacity: 0.5; cursor: wait; }
+.sons-refresh:not(:disabled):hover { filter: brightness(1.12); }
+
+/* Controles: volume + loop */
+.sons-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  background: #1b1f27;
+  border: 1px solid #2b313d;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.sons-vol {
+  flex: 1 1 240px;
+  color: #c7ccd4;
+  font-size: 0.9rem;
+}
+.sons-vol input[type="range"] {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  accent-color: #2e9e54;
+}
+.sons-loop {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #9aa4b2;
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+}
+.sons-loop.on { color: #7fb0e0; }
+.sons-loop input { width: 1.1rem; height: 1.1rem; accent-color: #2b6cb0; cursor: pointer; }
+
+/* Grade de sons */
+.sons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+.sons-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 1rem;
+  border: 1px solid #2b313d;
+  border-radius: 12px;
+  background: #1b1f27;
+  color: #dfe4ea;
+  cursor: pointer;
+  text-align: left;
+  transition: filter 0.15s, border-color 0.15s, transform 0.05s;
+}
+.sons-btn:hover { filter: brightness(1.15); }
+.sons-btn:active { transform: scale(0.98); }
+.sons-btn.active {
+  border-color: #2e9e54;
+  box-shadow: 0 0 0 1px #2e9e54 inset;
+}
+.sons-btn-icon { font-size: 1.3rem; color: #7fe0a0; }
+.sons-btn-name { font-weight: 600; font-size: 1.05rem; }
+.sons-btn-file { color: #7c8695; font-size: 0.72rem; }
+
+.sons-hint { color: #9aa4b2; font-size: 0.9rem; }
+.sons-hint code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}

@@ -3,6 +3,9 @@ dist/
 devices.json
 ir-local.json
 ir-codes-local.json
+sound-config.json
 .env
 .env.local
 .DS_Store
+tools/*.csv
+tools/scbeep.exe
