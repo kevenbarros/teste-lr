@@ -73,6 +73,25 @@
 .planob-row button.action.blink { background: #c79a2b; }
 .planob-row button.action.stop { background: #555b66; }
 
+/* Botões extras da fita: cores, modo e brilho */
+.planob-row.led-extras button { flex: 1 1 120px; }
+.planob-row button.action.red   { background: #c62828; }
+.planob-row button.action.green { background: #2e7d32; }
+.planob-row button.action.blue  { background: #1e5bb8; }
+.planob-row button.action.mode {
+  background: linear-gradient(90deg, #c62828, #c79a2b, #2e7d32, #1e5bb8);
+}
+.planob-row button.action.bright { background: #3b4252; }
+
+.planob-mini-label {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a93a0;
+}
+
 .planob-blinking {
   font-size: 0.8rem;
   color: #f0c64a;

@@ -3,32 +3,28 @@ const json = (r) => r.json().then((data) => {
   return data;
 });
 
+const post = (path, body) =>
+  fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(json);
+
+// "blaster" = qual Smart IR físico ("porao" = fita LED, "quarto" = TV). Padrão: porao.
 export const irLocalApi = {
-  status: () => fetch('/api/ir-local/status').then(json),
+  status: (blaster = 'porao') =>
+    fetch(`/api/ir-local/status?blaster=${encodeURIComponent(blaster)}`).then(json),
 
-  learn: (device, deviceName, key) =>
-    fetch('/api/ir-local/learn', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device, deviceName, key }),
-    }).then(json),
+  learn: (device, deviceName, key, blaster = 'porao') =>
+    post('/api/ir-local/learn', { device, deviceName, key, blaster }),
 
-  send: (device, key) =>
-    fetch('/api/ir-local/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device, key }),
-    }).then(json),
+  send: (device, key, blaster = 'porao') =>
+    post('/api/ir-local/send', { device, key, blaster }),
 
-  blink: (device, intervalMs) =>
-    fetch('/api/ir-local/blink', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device, intervalMs }),
-    }).then(json),
+  blink: (device, intervalMs, blaster = 'porao') =>
+    post('/api/ir-local/blink', { device, intervalMs, blaster }),
 
-  stop: () =>
-    fetch('/api/ir-local/stop', { method: 'POST' }).then(json),
+  stop: (blaster = 'porao') => post('/api/ir-local/stop', { blaster }),
 
   forget: (device, key) =>
     fetch(`/api/ir-local/codes/${encodeURIComponent(device)}/${encodeURIComponent(key)}`, {

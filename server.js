@@ -362,23 +362,36 @@ app.post('/api/lamps/:id/stop', (req, res) => {
 const irLocalCfgPath = join(__dirname, 'ir-local.json');
 const irLocalCodesPath = join(__dirname, 'ir-codes-local.json');
 
-let irLocal = null;
-if (existsSync(irLocalCfgPath)) {
+// Múltiplos Smart IR (blasters): ex. "porao" (fita de LED) e "quarto" (TV).
+// Formato novo em ir-local.json: { "blasters": { "porao": {...}, "quarto": {...} } }.
+// Formato antigo { id, key, ip, version } é migrado para o blaster "porao".
+const DEFAULT_BLASTER = 'porao';
+const irBlasters = {}; // { [id]: { device, busy, effect } }
+
+function loadBlasterConfigs() {
+  if (!existsSync(irLocalCfgPath)) {
+    console.warn('[IR-local] ir-local.json não encontrado — controles IR desativados.');
+    return {};
+  }
   try {
-    const cfg = JSON.parse(readFileSync(irLocalCfgPath, 'utf-8'));
-    if (cfg.key && !/COLE_AQUI/.test(cfg.key)) {
-      irLocal = createLocalIr(cfg);
-      irLocal.ensureConnected()
-        .then(() => console.log('[IR-local] conectado ao Smart IR'))
-        .catch((e) => console.warn('[IR-local] ainda não conectado:', e.message));
-    } else {
-      console.warn('[IR-local] ir-local.json sem local key — preencha "key".');
-    }
+    const raw = JSON.parse(readFileSync(irLocalCfgPath, 'utf-8'));
+    return (raw.blasters && typeof raw.blasters === 'object') ? raw.blasters : { [DEFAULT_BLASTER]: raw };
   } catch (err) {
     console.error('[IR-local] ir-local.json inválido:', err.message);
+    return {};
   }
-} else {
-  console.warn('[IR-local] ir-local.json não encontrado — aba Plano B desativada.');
+}
+
+for (const [id, cfg] of Object.entries(loadBlasterConfigs())) {
+  if (!cfg?.key || /COLE_AQUI/.test(cfg.key)) {
+    console.warn(`[IR-local] blaster "${id}" sem local key — ignorado.`);
+    continue;
+  }
+  const device = createLocalIr(cfg);
+  irBlasters[id] = { device, busy: false, effect: null };
+  device.ensureConnected()
+    .then(() => console.log(`[IR-local] blaster "${id}" conectado`))
+    .catch((e) => console.warn(`[IR-local] blaster "${id}" ainda não conectado:`, e.message));
 }
 
 function loadLocalCodes() {
@@ -394,70 +407,78 @@ function saveLocalCodes(store) {
   writeFileSync(irLocalCodesPath, JSON.stringify(store, null, 2));
 }
 
-// Sinaliza que um aprendizado está em curso, para o /status não reconectar
-// no meio do study mode (o blaster só aceita 1 conexão TCP por vez).
-let irLocalBusy = false;
-// Efeito ativo (ex.: piscar) — { handle, type, intervalMs }.
-let irLocalEffect = null;
-
-const requireIrLocal = (res) => {
-  if (!irLocal) {
-    res.status(503).json({ error: 'Plano B não configurado (falta ir-local.json com a local key)' });
-    return false;
+// Resolve o blaster pedido (b.busy sinaliza aprendizado em curso, para o /status
+// não reconectar no meio do study mode — o blaster só aceita 1 conexão TCP).
+function getBlaster(res, id) {
+  const b = irBlasters[id || DEFAULT_BLASTER];
+  if (!b) {
+    res.status(503).json({ error: `Smart IR "${id || DEFAULT_BLASTER}" não configurado em ir-local.json` });
+    return null;
   }
-  return true;
-};
+  return b;
+}
 
 app.get('/api/ir-local/status', async (req, res) => {
+  const id = String(req.query.blaster || DEFAULT_BLASTER);
+  const b = irBlasters[id];
   const store = loadLocalCodes();
   const devices = Object.fromEntries(
-    Object.entries(store.devices).map(([id, d]) => [id, { name: d.name, keys: Object.keys(d.keys || {}) }])
+    Object.entries(store.devices).map(([devId, d]) => [devId, { name: d.name, keys: Object.keys(d.keys || {}) }])
   );
   // O blaster derruba conexões ociosas; reconectamos sob demanda para reportar
   // o estado real (a menos que um aprendizado esteja rodando).
   let connected = false;
-  if (irLocal && !irLocalBusy) {
-    try { await irLocal.ensureConnected(); connected = irLocal.isConnected(); } catch { connected = false; }
-  } else if (irLocal) {
-    connected = irLocal.isConnected();
+  if (b && !b.busy) {
+    try { await b.device.ensureConnected(); connected = b.device.isConnected(); } catch { connected = false; }
+  } else if (b) {
+    connected = b.device.isConnected();
   }
-  res.json({ configured: !!irLocal, connected, devices, effect: irLocalEffect?.type || null, intervalMs: irLocalEffect?.intervalMs || null });
+  res.json({
+    configured: !!b,
+    connected,
+    blaster: id,
+    blasters: Object.keys(irBlasters),
+    devices,
+    effect: b?.effect?.type || null,
+    intervalMs: b?.effect?.intervalMs || null,
+  });
 });
 
 app.post('/api/ir-local/learn', async (req, res) => {
-  if (!requireIrLocal(res)) return;
+  const b = getBlaster(res, req.body.blaster);
+  if (!b) return;
   const device = String(req.body.device || 'fita-led');
-  const deviceName = String(req.body.deviceName || 'Fita de LED');
+  const deviceName = String(req.body.deviceName || device);
   const key = String(req.body.key || '').trim();
-  if (!key) return res.status(400).json({ error: 'informe "key" (ex: on, off)' });
+  if (!key) return res.status(400).json({ error: 'informe "key" (nome do botão)' });
 
-  stopIrLocalEffect();
-  irLocalBusy = true;
+  stopBlasterEffect(b);
+  b.busy = true;
   try {
-    await irLocal.ensureConnected();
+    await b.device.ensureConnected();
     const since = Date.now();
-    await irLocal.enterStudy();
+    await b.device.enterStudy();
 
     let code = null;
     let i = 0;
     const deadline = Date.now() + 30000;
     while (Date.now() < deadline) {
       await sleep(800);
-      if (irLocal.state.lastCode && irLocal.state.lastCodeAt >= since) {
-        code = irLocal.state.lastCode;
+      if (b.device.state.lastCode && b.device.state.lastCodeAt >= since) {
+        code = b.device.state.lastCode;
         break;
       }
       // O blaster derruba a conexão ociosa e sai do modo estudo; re-armamos a
       // cada ~5,6s (reconectando se preciso) para não perder a tecla.
       if (++i % 7 === 0) {
-        try { await irLocal.ensureConnected(); await irLocal.enterStudy(); } catch { /* tenta de novo no próximo ciclo */ }
+        try { await b.device.ensureConnected(); await b.device.enterStudy(); } catch { /* tenta de novo no próximo ciclo */ }
       }
     }
-    await irLocal.exitStudy().catch(() => {});
+    await b.device.exitStudy().catch(() => {});
 
     if (!code) {
       return res.status(408).json({
-        error: 'Nenhum código capturado em 30s. Aponte o controle da fita para o Smart IR e pressione o botão durante o aprendizado.',
+        error: 'Nenhum código capturado em 30s. Aponte o controle para o Smart IR e pressione o botão durante o aprendizado.',
       });
     }
 
@@ -468,24 +489,25 @@ app.post('/api/ir-local/learn', async (req, res) => {
     saveLocalCodes(store);
     res.json({ ok: true, device, key });
   } catch (err) {
-    await irLocal.exitStudy().catch(() => {});
+    await b.device.exitStudy().catch(() => {});
     res.status(500).json({ error: err.message });
   } finally {
-    irLocalBusy = false;
+    b.busy = false;
   }
 });
 
 app.post('/api/ir-local/send', async (req, res) => {
-  if (!requireIrLocal(res)) return;
+  const b = getBlaster(res, req.body.blaster);
+  if (!b) return;
   const device = String(req.body.device || 'fita-led');
   const key = String(req.body.key || '').trim();
   const store = loadLocalCodes();
   const code = store.devices[device]?.keys?.[key];
   if (!code) return res.status(404).json({ error: `código "${key}" não aprendido para "${device}"` });
-  stopIrLocalEffect();
+  stopBlasterEffect(b);
   try {
-    await irLocal.ensureConnected();
-    await irLocal.sendCode(code);
+    await b.device.ensureConnected();
+    await b.device.sendCode(code);
     res.json({ ok: true, device, key });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -501,13 +523,14 @@ app.delete('/api/ir-local/codes/:device/:key', (req, res) => {
 });
 
 // Pisca a fita alternando os códigos ON/OFF num intervalo configurável.
-function stopIrLocalEffect() {
-  if (irLocalEffect?.handle) clearInterval(irLocalEffect.handle);
-  irLocalEffect = null;
+function stopBlasterEffect(b) {
+  if (b?.effect?.handle) clearInterval(b.effect.handle);
+  if (b) b.effect = null;
 }
 
 app.post('/api/ir-local/blink', (req, res) => {
-  if (!requireIrLocal(res)) return;
+  const b = getBlaster(res, req.body.blaster);
+  if (!b) return;
   const device = String(req.body.device || 'fita-led');
   const intervalMs = Math.max(300, Math.min(10000, Number(req.body.intervalMs) || 800));
   const store = loadLocalCodes();
@@ -517,29 +540,30 @@ app.post('/api/ir-local/blink', (req, res) => {
     return res.status(404).json({ error: 'aprenda os botões "on" e "off" antes de piscar' });
   }
 
-  const wasRunning = !!irLocalEffect; // "Atualizar velocidade" (já piscando) x "Iniciar piscar"
-  stopIrLocalEffect();
-  irLocalBusy = true; // o efeito é dono da conexão; impede o /status de reconectar e brigar
+  const wasRunning = !!b.effect; // "Atualizar velocidade" (já piscando) x "Iniciar piscar"
+  stopBlasterEffect(b);
+  b.busy = true; // o efeito é dono da conexão; impede o /status de reconectar e brigar
 
-  if (!wasRunning) sound.playAlert(); // som só ao iniciar o piscar, na SoundCore 2
+  if (!wasRunning) sound.playAlert(); // som só ao iniciar o piscar, nas caixas configuradas
 
   let on = false;
   const tick = async () => {
     on = !on;
     try {
-      await irLocal.ensureConnected();
-      await irLocal.sendCode(on ? onCode : offCode);
+      await b.device.ensureConnected();
+      await b.device.sendCode(on ? onCode : offCode);
     } catch { /* ignora glitch; próximo tick tenta de novo */ }
   };
   const handle = setInterval(tick, intervalMs);
-  irLocalEffect = { handle, type: 'blink', intervalMs };
+  b.effect = { handle, type: 'blink', intervalMs };
   tick(); // primeiro disparo imediato
   res.json({ ok: true, intervalMs });
 });
 
 app.post('/api/ir-local/stop', (req, res) => {
-  stopIrLocalEffect();
-  irLocalBusy = false;
+  const b = irBlasters[req.body.blaster || DEFAULT_BLASTER];
+  if (b) { stopBlasterEffect(b); b.busy = false; }
+  sound.stopAlert(); // parar o piscar também para o som disparado ao iniciar
   res.json({ ok: true });
 });
 
@@ -561,7 +585,15 @@ app.post('/api/sound/play', (req, res) => {
 });
 
 app.post('/api/sound/stop', (req, res) => {
-  res.json(sound.stop());
+  res.json(sound.stopAll()); // para a reprodução e também o som do "Iniciar piscar"
+});
+
+app.post('/api/sound/sound-volume', (req, res) => {
+  try {
+    res.json(sound.setSoundVolume(req.body?.file, req.body?.volume));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.post('/api/sound/volume', (req, res) => {

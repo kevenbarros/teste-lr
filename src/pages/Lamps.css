@@ -25,6 +25,29 @@
   gap: 1rem;
 }
 
+/* Dentro do grid o espaçamento vem do gap; margem extra criava vão duplo. */
+.lamps-grid .lamp-card { margin-bottom: 0; }
+
+/* Seções da página (Lâmpadas / TV) */
+.room-section { margin-top: 1.75rem; }
+.room-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a93a3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.room-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #2a2f3a;
+}
+
 .lamp-card {
   background: #1a1d24;
   border: 1px solid #2a2f3a;
@@ -43,11 +66,61 @@
   border-color: #81D332;
   box-shadow: 0 0 0 2px #81D33255, 0 0 18px #81D33233;
 }
-.lamp-card.automation { cursor: default; }
+.lamp-card.offline { opacity: 0.6; }
+
+/* Automação: faixa horizontal compacta (texto ⟷ ações) */
+.lamp-card.automation {
+  cursor: default;
+  margin-bottom: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #1a1d24 0%, #1d2130 100%);
+  border-color: #333b4f;
+}
 .lamp-card.automation:active { cursor: default; }
 
-.lamp-card.offline { opacity: 0.6; }
-.lamp-card.automation { margin-bottom: 1.5rem; }
+.automation-info { flex: 1 1 260px; min-width: 0; }
+.automation-info h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.automation-tag {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #2a2f3a;
+  color: #9ca3af;
+}
+.automation-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.automation-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.automation-actions button {
+  flex: 0 1 auto;
+  min-width: 150px;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+}
+.automation-actions button.on:not(:disabled)  { background: #1d4429; border-color: #2e6b40; color: #bbf7d0; }
+.automation-actions button.on:hover:not(:disabled)  { background: #245534; }
+.automation-actions button.off:not(:disabled) { background: #4a2020; border-color: #713030; color: #fecaca; }
+.automation-actions button.off:hover:not(:disabled) { background: #5a2727; }
 
 .lamp-drag-handle {
   color: #4a5060;
@@ -115,6 +188,40 @@
   font-size: 0.85rem;
   color: #9ca3af;
 }
+
+/* Configurações do blink lado a lado */
+.lamp-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.lamp-settings input { width: 100%; box-sizing: border-box; }
+
+/* Divisor com rótulo entre liga/desliga e o bloco de piscar */
+.lamp-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.25rem 0 -0.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+.lamp-divider::before,
+.lamp-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #2a2f3a;
+}
+
+/* Ações principais com cor (consistentes com os chips de status) */
+.lamp-card button.lamp-primary { font-weight: 600; padding: 0.7rem 0.8rem; }
+.lamp-card button.lamp-primary.on:not(:disabled)  { background: #1d4429; border-color: #2e6b40; color: #bbf7d0; }
+.lamp-card button.lamp-primary.on:hover:not(:disabled)  { background: #245534; }
+.lamp-card button.lamp-primary.off:not(:disabled) { background: #4a2020; border-color: #713030; color: #fecaca; }
+.lamp-card button.lamp-primary.off:hover:not(:disabled) { background: #5a2727; }
 
 .lamp-card button {
   flex: 1;

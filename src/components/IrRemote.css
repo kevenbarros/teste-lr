@@ -1,0 +1,64 @@
+/* Grade de botões IR aprendidos (TV) */
+.irtv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+.irtv-item {
+  position: relative;
+}
+.irtv-btn {
+  width: 100%;
+  padding: 0.7rem 0.4rem;
+  border: 1px solid #2b313d;
+  border-radius: 10px;
+  background: #262b36;
+  color: #eef1f5;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.12s, transform 0.05s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.irtv-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.irtv-btn:not(:disabled):hover { filter: brightness(1.18); }
+.irtv-btn:not(:disabled):active { transform: scale(0.96); }
+
+.irtv-del {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+  padding: 0;
+  border: 1px solid #6b2b2b;
+  border-radius: 50%;
+  background: #3a1d1d;
+  color: #ffb4b4;
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.irtv-item:hover .irtv-del { opacity: 1; }
+
+.irtv-add {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.irtv-add input {
+  flex: 1 1 200px;
+  padding: 0.7rem 0.8rem;
+  background: #12151b;
+  color: #dfe4ea;
+  border: 1px solid #2b313d;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+.irtv-add input:disabled { opacity: 0.5; }

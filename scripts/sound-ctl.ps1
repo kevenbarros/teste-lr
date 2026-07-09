@@ -4,15 +4,19 @@
 # Modos:
 #   -Action play   → toca -Wav em todas as caixas (opcional -Loop, sem emenda)
 #                    até o processo ser morto
-#   -Action volume → só ajusta o volume dos endpoints e sai
-#   -Action list   → imprime os endpoints de saída ativos (um por linha, UTF-8) e sai
-# Parar = matar este processo (o Node faz isso via child.kill()).
+#   -Action volume    → só ajusta o volume dos endpoints e sai
+#   -Action list      → imprime os endpoints de saída ativos (um por linha, UTF-8) e sai
+#   -Action durations → imprime "arquivo|segundos" de cada som em -Dir e sai
+# Ao tocar, imprime "STARTED" (stdout) quando o áudio realmente começa, para o
+# Node cronometrar o progresso sem o erro do tempo de carga. Parar = matar o processo.
 param(
   [Parameter(Mandatory = $true)][string]$Dll,
   [string]$Devices = 'SoundCore 2',
   [string]$Volumes = '',
-  [ValidateSet('play', 'volume', 'list')][string]$Action = 'play',
+  [ValidateSet('play', 'volume', 'list', 'durations')][string]$Action = 'play',
   [string]$Wav,
+  [string]$Dir,
+  [int]$Gain = 100,
   [switch]$Loop
 )
 
@@ -28,6 +32,23 @@ try {
   if ($Action -eq 'list') {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     ($all | ForEach-Object { $_.FriendlyName }) -join "`n"
+    exit 0
+  }
+
+  if ($Action -eq 'durations') {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    if ($Dir -and (Test-Path $Dir)) {
+      Get-ChildItem -LiteralPath $Dir -File |
+        Where-Object { $_.Extension -match '^\.(wav|mp3)$' } |
+        ForEach-Object {
+          try {
+            $r = New-Object NAudio.Wave.AudioFileReader $_.FullName
+            $sec = $r.TotalTime.TotalSeconds
+            $r.Dispose()
+            "$($_.Name)|$sec"
+          } catch {}
+        }
+    }
     exit 0
   }
 
@@ -59,8 +80,9 @@ try {
   if ($Action -eq 'volume') { exit 0 }
   if (-not $Wav -or -not (Test-Path $Wav)) { exit 3 }
 
-  # WaveStream que repete a fonte sem emenda (loop contínuo).
-  Add-Type -ReferencedAssemblies $Dll -TypeDefinition @'
+  # WaveStream que repete a fonte sem emenda (loop contínuo) — só compila se preciso.
+  if ($Loop) {
+    Add-Type -ReferencedAssemblies $Dll -TypeDefinition @'
 using System;
 using NAudio.Wave;
 public class LoopStream : WaveStream {
@@ -80,19 +102,24 @@ public class LoopStream : WaveStream {
   }
 }
 '@
+  }
 
   # Um reader + WasapiOut por caixa (mesmo arquivo); Play() em todas e espera
   # enquanto qualquer uma ainda estiver tocando.
   $players = @()
   try {
+    $g = [Math]::Max(0, [Math]::Min(100, $Gain)) / 100
     foreach ($t in $targets) {
       $reader = New-Object NAudio.Wave.AudioFileReader $Wav
+      $reader.Volume = $g  # ganho por-som (independente do volume do endpoint/caixa)
       $source = if ($Loop) { New-Object LoopStream $reader } else { $reader }
       $out = New-Object NAudio.Wave.WasapiOut($t.Dev, [NAudio.CoreAudioApi.AudioClientShareMode]::Shared, $false, 200)
       $out.Init($source)
       $players += , @{ Out = $out; Reader = $reader }
     }
     foreach ($p in $players) { $p.Out.Play() }
+    # marca o início real da reprodução (Node cronometra o progresso a partir daqui)
+    [Console]::Out.WriteLine('STARTED'); [Console]::Out.Flush()
     do {
       Start-Sleep -Milliseconds 100
       $any = $false

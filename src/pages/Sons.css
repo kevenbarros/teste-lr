@@ -6,6 +6,10 @@
 
 .sons-page h1 { margin-bottom: 0.25rem; }
 
+/* Painel de sons embutido numa página (aba Porão) — sem reconstranger largura */
+.sons-board { margin-top: 1.5rem; }
+.sons-h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+
 .sons-sub {
   color: #9aa4b2;
   margin: 0 0 1rem;
@@ -124,6 +128,46 @@
 .sons-refresh:disabled { opacity: 0.5; cursor: wait; }
 .sons-refresh:not(:disabled):hover { filter: brightness(1.12); }
 
+/* Barra de progresso do som tocando */
+.sons-progress {
+  margin-bottom: 1rem;
+}
+.sons-progress-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: #12151b;
+  border: 1px solid #2b313d;
+}
+.sons-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2e9e54, #7fe0a0);
+  transition: width 0.2s linear;
+}
+.sons-progress-knob {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #dfe4ea;
+  border: 2px solid #2e9e54;
+  transform: translate(-50%, -50%);
+  transition: left 0.2s linear;
+}
+.sons-progress-time {
+  display: flex;
+  justify-content: space-between;
+  color: #9aa4b2;
+  font-size: 0.78rem;
+  margin-top: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Cards de controles (caixas / loop) */
 .sons-controls {
   display: flex;
@@ -175,6 +219,44 @@
   border-color: #2e9e54;
   box-shadow: 0 0 0 1px #2e9e54 inset;
 }
+
+/* Card de som: botão de tocar + slider de volume do próprio som */
+.sons-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #2b313d;
+  border-radius: 12px;
+  background: #1b1f27;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.sons-card.active {
+  border-color: #2e9e54;
+  box-shadow: 0 0 0 1px #2e9e54 inset;
+}
+.sons-play {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 1rem 1rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: #dfe4ea;
+  cursor: pointer;
+  text-align: left;
+  transition: filter 0.15s, transform 0.05s;
+}
+.sons-play:hover { filter: brightness(1.15); }
+.sons-play:active { transform: scale(0.98); }
+.sons-svol {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem 0.7rem;
+  border-top: 1px solid #232935;
+}
+.sons-svol input[type="range"] { flex: 1; accent-color: #c79a2b; }
 .sons-btn-icon { font-size: 1.3rem; color: #7fe0a0; }
 .sons-btn-name { font-weight: 600; font-size: 1.05rem; }
 .sons-btn-file { color: #7c8695; font-size: 0.72rem; }

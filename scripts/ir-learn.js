@@ -1,5 +1,7 @@
 // Aprende UM botão IR (modo dedicado e robusto) e salva em ir-codes-local.json.
-// Uso:  node scripts/ir-learn.js <key>     (ex: on, off)
+// Uso:  node scripts/ir-learn.js <key> [blaster] [device]
+//   ex: node scripts/ir-learn.js vermelho          (blaster porao, device fita-led)
+//       node scripts/ir-learn.js Power quarto tv   (TV pelo blaster do quarto)
 //   ou: npm run ir:learn:on  /  npm run ir:learn:off
 //
 // IMPORTANTE: pare o `npm run dev` antes (o blaster só aceita 1 conexão).
@@ -7,8 +9,9 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import TuyAPI from 'tuyapi';
 
 const KEY = (process.argv[2] || '').trim();
-const DEVICE = 'fita-led';
-const DEVICE_NAME = 'Fita de LED porão';
+const BLASTER = (process.argv[3] || 'porao').trim();
+const DEVICE = (process.argv[4] || (BLASTER === 'quarto' ? 'tv' : 'fita-led')).trim();
+const DEVICE_NAME = DEVICE === 'tv' ? 'TV Quarto' : 'Fita de LED porão';
 const WINDOW_MS = 40000;
 
 if (!KEY) {
@@ -18,7 +21,13 @@ if (!KEY) {
 
 const cfgUrl = new URL('../ir-local.json', import.meta.url);
 const codesUrl = new URL('../ir-codes-local.json', import.meta.url);
-const cfg = JSON.parse(readFileSync(cfgUrl, 'utf-8'));
+const raw = JSON.parse(readFileSync(cfgUrl, 'utf-8'));
+// Formato novo { blasters: { porao: {...} } } ou antigo { id, key, ip } na raiz.
+const cfg = raw.blasters ? raw.blasters[BLASTER] : raw;
+if (!cfg?.id || !cfg?.key || /COLE_AQUI/.test(cfg.key)) {
+  console.error(`Blaster "${BLASTER}" sem id/key válidos em ir-local.json.`);
+  process.exit(2);
+}
 
 const device = new TuyAPI({
   id: cfg.id,
@@ -32,7 +41,10 @@ const device = new TuyAPI({
 let captured = null;
 const grab = (d) => {
   const c = d?.dps?.['202'];
-  if (c && !captured) captured = c;
+  // Capturas reais têm ~190+ chars; fragmentos curtos são ruído — ignora e
+  // continua esperando um código válido.
+  if (c && c.length >= 40 && !captured) captured = c;
+  else if (c && c.length < 40) console.log(`   (ignorado fragmento de ${c.length} chars — aperte de novo)`);
 };
 device.on('data', grab);
 device.on('dp-refresh', grab);
@@ -46,13 +58,22 @@ const studyExit = () =>
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {
+  console.log(`Blaster "${BLASTER}" (${cfg.id}) | device "${DEVICE}"`);
   console.log(`Conectando em ${cfg.ip || '(broadcast)'}...`);
   try {
     if (!cfg.ip) await device.find({ timeout: 7 });
     await device.connect();
   } catch (e) {
-    console.error('Falha ao conectar:', e.message, '\n→ O `npm run dev` está parado? O IP está certo? (npm run ir:scan ou arp -a)');
-    process.exit(1);
+    // IP fixo pode ter mudado (DHCP): limpa e redescobre por broadcast.
+    try {
+      device.device.ip = undefined;
+      await device.find({ timeout: 7 });
+      await device.connect();
+      console.log(`(IP mudou — redescoberto em ${device.device.ip}; atualize ir-local.json)`);
+    } catch {
+      console.error('Falha ao conectar:', e.message, '\n→ O `npm run dev` está parado? O IP está certo? (npm run ir:scan ou arp -a)');
+      process.exit(1);
+    }
   }
 
   await study();

@@ -1,9 +1,8 @@
 import { NavLink, Route, Routes } from 'react-router-dom';
-import Home from './pages/Home.jsx';
-import Lamps from './pages/Lamps.jsx';
 import Relogio from './pages/Relogio.jsx';
-import PlanoB from './pages/PlanoB.jsx';
-import Sons from './pages/Sons.jsx';
+import Quarto from './pages/Quarto.jsx';
+import Porao from './pages/Porao.jsx';
+import Config from './pages/Config.jsx';
 import { useChrono, chronoDisplayText } from './lib/localChrono.js';
 
 const STATE_LABEL = {
@@ -24,33 +23,25 @@ function NavChrono() {
   );
 }
 
+const navClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`;
+
 export default function App() {
   return (
     <div className="shell">
       <nav className="shell-nav">
-        <NavLink to="/" end className="brand">⌂</NavLink>
-        <NavLink to="/lampadas" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-          Lâmpadas
-        </NavLink>
-        <NavLink to="/relogios" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-          Relógios
-        </NavLink>
-        <NavLink to="/plano-b" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-          Plano B
-        </NavLink>
-        <NavLink to="/sons" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-          Sons
-        </NavLink>
+        <NavLink to="/relogio" className={navClass}>Relógio</NavLink>
+        <NavLink to="/quarto" className={navClass}>Quarto</NavLink>
+        <NavLink to="/porao" className={navClass}>Porão</NavLink>
+        <NavLink to="/config" className={navClass}>Configuração</NavLink>
         <NavChrono />
       </nav>
       <main className="shell-main">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/lampadas" element={<Lamps />} />
-          <Route path="/relogios" element={<Relogio />} />
-          <Route path="/plano-b" element={<PlanoB />} />
-          <Route path="/sons" element={<Sons />} />
-          <Route path="*" element={<Home />} />
+          <Route path="/relogio" element={<Relogio />} />
+          <Route path="/quarto" element={<Quarto />} />
+          <Route path="/porao" element={<Porao />} />
+          <Route path="/config" element={<Config />} />
+          <Route path="*" element={<Relogio />} />
         </Routes>
       </main>
     </div>

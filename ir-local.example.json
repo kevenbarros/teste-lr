@@ -1,5 +1,16 @@
 {
-  "id": "eb1fd9884050f83f94vos3",
-  "key": "COLE_AQUI_A_LOCAL_KEY_DO_SMART_IR",
-  "version": "3.3"
+  "blasters": {
+    "porao": {
+      "id": "COLE_AQUI_O_DEVICE_ID_DO_SMART_IR",
+      "key": "COLE_AQUI_A_LOCAL_KEY_DO_SMART_IR",
+      "ip": "192.168.1.5",
+      "version": "3.3"
+    },
+    "quarto": {
+      "id": "COLE_AQUI_O_DEVICE_ID_DO_SMART_IR",
+      "key": "COLE_AQUI_A_LOCAL_KEY_DO_SMART_IR",
+      "ip": "192.168.1.6",
+      "version": "3.3"
+    }
+  }
 }

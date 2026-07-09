@@ -5,7 +5,13 @@ import crypto from 'node:crypto';
 import { readFileSync } from 'fs';
 import TuyAPI from 'tuyapi';
 
-const cfg = JSON.parse(readFileSync(new URL('../ir-local.json', import.meta.url), 'utf-8'));
+const BLASTER = (process.argv[2] || 'porao').trim();
+const raw = JSON.parse(readFileSync(new URL('../ir-local.json', import.meta.url), 'utf-8'));
+const cfg = raw.blasters ? raw.blasters[BLASTER] : raw;
+if (!cfg?.id) {
+  console.error(`Blaster "${BLASTER}" não encontrado em ir-local.json.`);
+  process.exit(2);
+}
 const TARGET = cfg.id;
 const udpKey = crypto.createHash('md5').update('yGAdlopoPVldABfn', 'utf8').digest();
 

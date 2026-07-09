@@ -15,12 +15,20 @@ export const soundApi = {
 
   stop: () => fetch('/api/sound/stop', { method: 'POST' }).then(json),
 
-  // volume ao vivo; com device ajusta só aquela caixa
+  // volume da CAIXA ao vivo; com device ajusta só aquela caixa
   volume: (volume, device) =>
     fetch('/api/sound/volume', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ volume, device }),
+    }).then(json),
+
+  // volume específico de um SOM (vale na próxima vez que tocar)
+  soundVolume: (file, volume) =>
+    fetch('/api/sound/sound-volume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file, volume }),
     }).then(json),
 
   devices: () => fetch('/api/sound/devices').then(json),

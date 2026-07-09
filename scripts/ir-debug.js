@@ -1,11 +1,17 @@
 // Diagnóstico do modo aprendizado IR: conecta, entra em study e loga TUDO que
 // o blaster envia por 35s. Rode e aperte o botão do controle da fita apontando
-// para o blaster. Uso: npm run ir:debug
+// para o blaster. Uso: npm run ir:debug [-- <blaster>]  (padrão: porao)
 import { readFileSync } from 'fs';
 import TuyAPI from 'tuyapi';
 
-const cfg = JSON.parse(readFileSync(new URL('../ir-local.json', import.meta.url), 'utf-8'));
-console.log(`Device ${cfg.id} @ ${cfg.ip || '(broadcast)'} v${cfg.version || '3.3'}\n`);
+const BLASTER = (process.argv[2] || 'porao').trim();
+const raw = JSON.parse(readFileSync(new URL('../ir-local.json', import.meta.url), 'utf-8'));
+const cfg = raw.blasters ? raw.blasters[BLASTER] : raw;
+if (!cfg?.id || !cfg?.key || /COLE_AQUI/.test(cfg.key)) {
+  console.error(`Blaster "${BLASTER}" sem id/key válidos em ir-local.json.`);
+  process.exit(2);
+}
+console.log(`Blaster "${BLASTER}" — device ${cfg.id} @ ${cfg.ip || '(broadcast)'} v${cfg.version || '3.3'}\n`);
 
 const device = new TuyAPI({
   id: cfg.id,

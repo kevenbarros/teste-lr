@@ -31,8 +31,11 @@ export function createLocalIr({ id, key, version = '3.3', ip }) {
   device.on('error', () => {}); // silencioso; erros aparecem no connect()
 
   const capture = (dps) => {
-    if (dps && dps[DP_RECV]) {
-      state.lastCode = dps[DP_RECV];
+    const c = dps?.[DP_RECV];
+    // Códigos reais têm ~190+ chars; fragmentos curtos são ruído de captura
+    // (já vimos 12 chars serem reportados) — ignora e segue esperando.
+    if (c && c.length >= 40) {
+      state.lastCode = c;
       state.lastCodeAt = Date.now();
     }
   };
@@ -41,8 +44,22 @@ export function createLocalIr({ id, key, version = '3.3', ip }) {
 
   async function ensureConnected() {
     if (device.isConnected()) return;
-    if (!ip) await device.find({ timeout: 7 });
-    await device.connect();
+    try {
+      if (!ip) await device.find({ timeout: 7 });
+      await device.connect();
+    } catch (err) {
+      // O IP fixo pode ter mudado (DHCP). O find() do tuyapi NÃO sobrescreve um
+      // ip já definido, então limpamos antes para forçar a redescoberta por
+      // broadcast. (Só funciona se o blaster fizer broadcast; senão, mantém o
+      // erro original.)
+      try {
+        device.device.ip = undefined;
+        await device.find({ timeout: 7 });
+        await device.connect();
+      } catch {
+        throw err;
+      }
+    }
   }
 
   // Comandos IR não recebem eco de status; não esperamos resposta (senão timeout).
