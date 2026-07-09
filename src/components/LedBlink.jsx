@@ -29,7 +29,6 @@ export default function LedBlink({ info, refresh }) {
   return (
     <section className="planob-card">
       <h2>Piscar {blinking && <span className="planob-blinking">● piscando</span>}</h2>
-      <p className="planob-hint">Alterna LIGAR/DESLIGAR continuamente. Ajuste a velocidade abaixo.</p>
 
       <div className="planob-slider">
         <label>Intervalo: <strong>{intervalMs} ms</strong> ({(1000 / intervalMs).toFixed(1)}x por segundo)</label>

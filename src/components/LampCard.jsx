@@ -43,7 +43,6 @@ export default function LampCard({ lamp, onChange }) {
         </button>
       </div>
 
-      <div className="lamp-divider"><span>piscar</span></div>
 
       <div className="lamp-settings">
         <div className="lamp-slider-row">

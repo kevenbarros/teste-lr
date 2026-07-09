@@ -56,8 +56,7 @@ export default function LedControl({ info, refresh }) {
         <p className="planob-hint">Aprenda os botões "on" e "off" na aba <strong>Configuração</strong> para habilitar.</p>
       )}
 
-      <div className="planob-mini-label">Cores e modo</div>
-      <div className="planob-row led-extras">
+      <div className="planob-row botoesdistantes led-extras">
         {LED_KEYS.filter(k => k.className !== 'bright').map(({ key, label, className }) => (
           <button key={key} className={`action ${className}`} disabled={!learned.includes(key) || !!busy}
             onClick={() => run(key, () => irLocalApi.send(IR_DEVICE, key), `Comando ${label} enviado`)}>
@@ -66,8 +65,7 @@ export default function LedControl({ info, refresh }) {
         ))}
       </div>
 
-      <div className="planob-mini-label">Brilho</div>
-      <div className="planob-row led-extras">
+      <div className="planob-row botoesdistantes led-extras">
         {LED_KEYS.filter(k => k.className === 'bright').map(({ key, label, className }) => (
           <button key={key} className={`action ${className}`} disabled={!learned.includes(key) || !!busy}
             onClick={() => run(key, () => irLocalApi.send(IR_DEVICE, key), `Comando ${label} enviado`)}>
