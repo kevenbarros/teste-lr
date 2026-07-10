@@ -9,6 +9,30 @@ export const IR_DEVICE_NAME = 'Fita de LED porão';
 export const TV_DEVICE = 'tv';                 // TV (blaster quarto)
 export const TV_DEVICE_NAME = 'TV Quarto';
 
+// Botões do controle da TV (aba Quarto). power liga E desliga (mesmo código).
+export const TV_KEYS = [
+  { key: 'power',  label: '⏻', name: 'Power (liga/desliga)' },
+  { key: 'vol+',   label: '+', name: 'Volume +' },
+  { key: 'vol-',   label: '−', name: 'Volume −' },
+  { key: 'canal+', label: '+', name: 'Canal +' },
+  { key: 'canal-', label: '−', name: 'Canal −' },
+  { key: 'dvd',    label: 'DVD', name: 'DVD' },
+];
+
+// Lâmpada IR do quarto (blaster quarto): liga/desliga, brilho, cores e smooth.
+export const IRLAMP_DEVICE = 'lampada-ir';
+export const IRLAMP_DEVICE_NAME = 'Lâmpada IR quarto';
+export const IRLAMP_KEYS = [
+  { key: 'on',       label: 'Ligar',      className: 'on' },
+  { key: 'off',      label: 'Desligar',   className: 'off' },
+  { key: 'brilho+',  label: '☀ Brilho +', className: 'bright' },
+  { key: 'brilho-',  label: '🔅 Brilho −', className: 'bright' },
+  { key: 'vermelho', label: 'Vermelho',   className: 'red' },
+  { key: 'branco',   label: 'Branco',     className: 'white' },
+  { key: 'azul',     label: 'Azul',       className: 'blue' },
+  { key: 'smooth',   label: 'Smooth',     className: 'mode' },
+];
+
 // Botões da fita além de on/off: cores, modo e brilho. Usado no controle
 // (Porão) e no aprendizado (Configuração) para não divergirem.
 export const LED_KEYS = [

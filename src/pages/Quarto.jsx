@@ -1,9 +1,10 @@
 import { useLamps, findLamp } from '../lib/useLamps.js';
-import { BLASTER_QUARTO, TV_DEVICE, TV_DEVICE_NAME } from '../lib/useIrLocal.js';
 import QuartoAutomation from '../components/QuartoAutomation.jsx';
 import LampCard from '../components/LampCard.jsx';
-import IrRemote from '../components/IrRemote.jsx';
+import TvRemote from '../components/TvRemote.jsx';
+import IrLampCard from '../components/IrLampCard.jsx';
 import './Lamps.css';
+import './Quarto.css';
 
 export default function Quarto() {
   const { lamps, error, refresh } = useLamps();
@@ -11,32 +12,32 @@ export default function Quarto() {
   const saida = findLamp(lamps, /sa[ií]da/i);
 
   return (
-    <div className="lamps-page">
-      <h1>Quarto</h1>
-      {error && <div className="lamps-error">Erro: {error}</div>}
+    <div className="quarto-page">
+      {(error || (lamps.length > 0 && !entrada && !saida)) && (
+        <header className="quarto-head">
+          {error && <div className="lamps-error">Erro: {error}</div>}
+          {lamps.length > 0 && !entrada && !saida && (
+            <div className="lamps-error">Lâmpadas "Quarto entrada/saída" não encontradas em devices.json.</div>
+          )}
+        </header>
+      )}
 
       <QuartoAutomation />
 
-      <section className="room-section">
-        <h2 className="room-section-title">💡 Lâmpadas</h2>
-        <div className="lamps-grid">
+      <div className="quarto-grid">
+        <div className="quarto-col quarto-col-lamp1">
           {entrada && <LampCard lamp={entrada} onChange={refresh} />}
+        </div>
+        <div className="quarto-col quarto-col-lamp2">
           {saida && <LampCard lamp={saida} onChange={refresh} />}
         </div>
-        {lamps.length > 0 && !entrada && !saida && (
-          <p className="lamps-error">Lâmpadas "Quarto entrada/saída" não encontradas em devices.json.</p>
-        )}
-      </section>
-
-      <section className="room-section">
-        <h2 className="room-section-title">📺 TV</h2>
-        <IrRemote
-          blaster={BLASTER_QUARTO}
-          device={TV_DEVICE}
-          deviceName={TV_DEVICE_NAME}
-          title="Controle por infravermelho"
-        />
-      </section>
+        <div className="quarto-col quarto-col-tv">
+          <TvRemote />
+        </div>
+        <div className="quarto-col quarto-col-irlamp">
+          <IrLampCard />
+        </div>
+      </div>
     </div>
   );
 }

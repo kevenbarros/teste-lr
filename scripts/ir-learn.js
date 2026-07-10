@@ -11,7 +11,12 @@ import TuyAPI from 'tuyapi';
 const KEY = (process.argv[2] || '').trim();
 const BLASTER = (process.argv[3] || 'porao').trim();
 const DEVICE = (process.argv[4] || (BLASTER === 'quarto' ? 'tv' : 'fita-led')).trim();
-const DEVICE_NAME = DEVICE === 'tv' ? 'TV Quarto' : 'Fita de LED porão';
+const DEVICE_NAMES = {
+  'fita-led': 'Fita de LED porão',
+  'tv': 'TV Quarto',
+  'lampada-ir': 'Lâmpada IR quarto',
+};
+const DEVICE_NAME = DEVICE_NAMES[DEVICE] || DEVICE;
 const WINDOW_MS = 40000;
 
 if (!KEY) {
@@ -77,8 +82,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   }
 
   await study();
-  console.log(`\n>>> APRENDENDO "${KEY.toUpperCase()}" <<<`);
-  console.log('>>> Aponte o controle da fita para o blaster e APERTE o botão (pode repetir). 40s...\n');
+  console.log(`\n>>> APRENDENDO "${KEY.toUpperCase()}" (${DEVICE_NAME}) <<<`);
+  console.log('>>> Aponte o controle para o blaster e APERTE o botão (pode repetir). 40s...\n');
 
   const deadline = Date.now() + WINDOW_MS;
   let i = 0;
