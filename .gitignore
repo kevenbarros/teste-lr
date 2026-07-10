@@ -4,6 +4,7 @@ devices.json
 ir-local.json
 ir-codes-local.json
 sound-config.json
+talk-config.json
 .env
 .env.local
 .DS_Store

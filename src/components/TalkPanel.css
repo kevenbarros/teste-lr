@@ -1,0 +1,93 @@
+/* Painel do interfone (aba Falar): botão redondo abre/fecha o canal de voz. */
+.talk-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  background: #1b1f27;
+  border: 1px solid #2b313d;
+  border-radius: 12px;
+  padding: 1.5rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.talk-btn {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 2px solid #2b313d;
+  background: #232935;
+  color: #dfe4ea;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.talk-btn .talk-ico { font-size: 2.4rem; }
+.talk-btn:not(:disabled):hover { filter: brightness(1.12); }
+.talk-btn:disabled { opacity: 0.55; cursor: wait; }
+
+/* conectando: âmbar; ao vivo: verde pulsando */
+.talk-btn.starting {
+  border-color: #c79a2b;
+  color: #e0c680;
+  animation: talk-pulse-amber 1.2s infinite;
+}
+.talk-btn.live {
+  border-color: #2e9e54;
+  background: #17301f;
+  color: #7fe0a0;
+  animation: talk-pulse 1.6s infinite;
+}
+@keyframes talk-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(46, 158, 84, 0.45); }
+  70% { box-shadow: 0 0 0 20px rgba(46, 158, 84, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 158, 84, 0); }
+}
+@keyframes talk-pulse-amber {
+  0% { box-shadow: 0 0 0 0 rgba(199, 154, 43, 0.4); }
+  70% { box-shadow: 0 0 0 14px rgba(199, 154, 43, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(199, 154, 43, 0); }
+}
+
+.talk-status {
+  color: #9aa4b2;
+  font-size: 0.95rem;
+  text-align: center;
+}
+.talk-status strong { color: #dfe4ea; }
+
+.talk-live-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.talk-live-badge {
+  background: #b04545;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  animation: talk-blink 1.2s steps(1) infinite;
+}
+@keyframes talk-blink { 50% { opacity: 0.45; } }
+.talk-timer {
+  color: #7fe0a0;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* volumes das caixas do interfone (reusa .sons-out do Sons.css) */
+.talk-vols {
+  width: 100%;
+  max-width: 460px;
+}

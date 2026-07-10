@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from 'react-router-dom';
 import Relogio from './pages/Relogio.jsx';
 import Quarto from './pages/Quarto.jsx';
 import Porao from './pages/Porao.jsx';
+import Falar from './pages/Falar.jsx';
 import Config from './pages/Config.jsx';
 import { useChrono, chronoDisplayText } from './lib/localChrono.js';
 
@@ -32,6 +33,7 @@ export default function App() {
         <NavLink to="/relogio" className={navClass}>Relógio</NavLink>
         <NavLink to="/quarto" className={navClass}>Quarto</NavLink>
         <NavLink to="/porao" className={navClass}>Porão</NavLink>
+        <NavLink to="/falar" className={navClass}>Falar</NavLink>
         <NavLink to="/config" className={navClass}>Configuração</NavLink>
         <NavChrono />
       </nav>
@@ -40,6 +42,7 @@ export default function App() {
           <Route path="/relogio" element={<Relogio />} />
           <Route path="/quarto" element={<Quarto />} />
           <Route path="/porao" element={<Porao />} />
+          <Route path="/falar" element={<Falar />} />
           <Route path="/config" element={<Config />} />
           <Route path="*" element={<Relogio />} />
         </Routes>

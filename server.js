@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createLocalIr } from './irLocal.js';
 import * as sound from './soundPlayer.js';
+import * as talk from './micTalk.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 5858;
@@ -611,6 +612,52 @@ app.get('/api/sound/devices', async (req, res) => {
 app.post('/api/sound/outputs', (req, res) => {
   try {
     res.json(sound.setOutputs(req.body?.outputs));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FALAR nas caixas ("drop in": microfone do PC ao vivo) — ver micTalk.js
+// ════════════════════════════════════════════════════════════════════════════
+
+app.get('/api/talk/status', (req, res) => {
+  res.json(talk.status());
+});
+
+// Saídas (mesmos endpoints Render do som) + microfones, para a aba Configuração.
+app.get('/api/talk/devices', async (req, res) => {
+  const [devices, mics] = await Promise.all([sound.listDevices(), talk.listMics()]);
+  res.json({ devices, mics, ...talk.status() });
+});
+
+app.post('/api/talk/start', (req, res) => {
+  try {
+    res.json(talk.start());
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/talk/stop', (req, res) => {
+  res.json(talk.stop());
+});
+
+app.post('/api/talk/outputs', (req, res) => {
+  try {
+    res.json(talk.setOutputs(req.body?.outputs));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/talk/mic', (req, res) => {
+  res.json(talk.setMic(req.body?.mic));
+});
+
+app.post('/api/talk/volume', (req, res) => {
+  try {
+    res.json(talk.setVolume(req.body?.volume, req.body?.device));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
