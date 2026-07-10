@@ -1,0 +1,119 @@
+/* Controle remoto da TV — layout de controle físico */
+
+.tvremote {
+  width: 244px;
+  margin: 1rem auto;
+  padding: 1.5rem 1.25rem;
+  background: linear-gradient(180deg, #141821, #0e1117);
+  border: 1px solid #2b313d;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.tvremote button {
+  border: 1px solid #343b49;
+  color: #e8ebf0;
+  cursor: pointer;
+  font-weight: 700;
+  transition: filter 0.12s, transform 0.06s, box-shadow 0.12s;
+}
+.tvremote button:disabled { opacity: 0.35; cursor: not-allowed; }
+.tvremote button:not(:disabled):hover { filter: brightness(1.2); }
+.tvremote button:not(:disabled):active { transform: scale(0.94); }
+
+/* Power — redondo, vermelho, liga E desliga */
+.tvr-power {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  background: radial-gradient(circle at 30% 30%, #d24545, #8f2626);
+  border-color: #a13333;
+  box-shadow: 0 4px 14px rgba(190, 60, 60, 0.35);
+}
+
+.tvr-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+/* Balancim de volume (+ em cima, − embaixo) */
+.tvr-rocker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid #343b49;
+}
+.tvr-rocker-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: #7b8494;
+  pointer-events: none;
+  z-index: 1;
+}
+.tvr-vol {
+  width: 56px;
+  height: 54px;
+  border: 0;
+  background: #232937;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.tvr-vol:first-of-type { padding-bottom: 12px; border-bottom: 1px solid #12161e; }
+.tvr-vol:last-of-type { padding-top: 12px; }
+
+/* DVD */
+.tvr-dvd {
+  align-self: center;
+  padding: 0.9rem 0.7rem;
+  border-radius: 12px;
+  background: #232937;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+}
+
+/* Modo gravar: botões pulsam com contorno âmbar; ✓ discreto nos gravados */
+.tvremote button.recording:not(:disabled) {
+  border-color: #c79a2b;
+  box-shadow: 0 0 0 2px rgba(199, 154, 43, 0.35);
+  animation: tvr-rec 1.2s ease-in-out infinite;
+}
+@keyframes tvr-rec { 50% { box-shadow: 0 0 0 5px rgba(199, 154, 43, 0.12); } }
+
+.tvremote button.has-code.recording:not(:disabled) {
+  border-color: #4b9e63;
+  box-shadow: 0 0 0 2px rgba(75, 158, 99, 0.3);
+  animation: none;
+}
+
+.tvr-footer { text-align: center; }
+
+.tvr-learn-toggle {
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px dashed #4a5264;
+  background: transparent;
+  color: #aab3c2;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tvr-learn-toggle:hover:not(:disabled) { border-color: #c79a2b; color: #e6c05a; }
+.tvr-learn-toggle.active {
+  border-style: solid;
+  border-color: #c79a2b;
+  color: #f0c64a;
+  background: rgba(199, 154, 43, 0.1);
+}
+.tvr-learn-toggle:disabled { opacity: 0.4; cursor: not-allowed; }

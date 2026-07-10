@@ -82,10 +82,22 @@
 .planob-row button.action.red   { background: #c62828; }
 .planob-row button.action.green { background: #2e7d32; }
 .planob-row button.action.blue  { background: #1e5bb8; }
+.planob-row button.action.white { background: #dfe3e8; color: #1b1f27; }
 .planob-row button.action.mode {
   background: linear-gradient(90deg, #c62828, #c79a2b, #2e7d32, #1e5bb8);
 }
 .planob-row button.action.bright { background: #3b4252; }
+
+/* Modo gravar (cards IR): contorno âmbar pulsando; verde = já tem código */
+.planob-row button.recording:not(:disabled) {
+  box-shadow: 0 0 0 2px rgba(199, 154, 43, 0.45);
+  animation: planob-rec 1.2s ease-in-out infinite;
+}
+@keyframes planob-rec { 50% { box-shadow: 0 0 0 5px rgba(199, 154, 43, 0.15); } }
+.planob-row button.has-code.recording:not(:disabled) {
+  box-shadow: 0 0 0 2px rgba(75, 158, 99, 0.45);
+  animation: none;
+}
 
 .planob-mini-label {
   margin: 1rem 0 0.5rem;
