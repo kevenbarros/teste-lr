@@ -22,8 +22,8 @@ export default function QuartoAutomation() {
     }
   };
 
-  // Diferente das outras, esta só volta quando a cena inteira terminou (~6s):
-  // o piscar acaba, a TV recebe o IR e a playlist troca.
+  // A cena leva ~5s (playlist → TV → espera). Ela volta no instante em que o
+  // piscar COMEÇA, que ainda roda uns 5s sozinho — daí a mensagem no futuro.
   const runScene = async () => {
     setRunning('sala');
     setMsg(null);
@@ -32,7 +32,7 @@ export default function QuartoAutomation() {
       const falhas = r.results.filter((s) => !s.ok);
       setMsg(falhas.length
         ? `Falhou: ${falhas.map((f) => `${f.label} (${f.error})`).join(' · ')}`
-        : 'Sala avançada: luzes apagadas, TV ligada e playlist trocada.');
+        : 'Playlist trocada e TV ligada — as luzes vão piscar e apagar.');
     } catch (err) {
       setMsg(err.message);
     } finally {
@@ -58,7 +58,7 @@ export default function QuartoAutomation() {
           className="scene"
           disabled={!!running}
           onClick={runScene}
-          title="Pisca e desliga as luzes, liga a TV e troca para The Faceless Ones"
+          title="Troca para The Faceless Ones, liga a TV e, 5s depois, pisca e desliga as luzes"
         >
           {running === 'sala' ? 'Avançando…' : '🚪 Avançar de sala'}
         </button>

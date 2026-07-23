@@ -4,17 +4,17 @@
       "id": "avancar-de-sala",
       "name": "Avançar de sala",
       "icon": "🚪",
-      "description": "Pisca e desliga as luzes do quarto, liga a TV e troca para The Faceless Ones.",
+      "description": "Troca para The Faceless Ones, liga a TV e, 5s depois, pisca e desliga as luzes.",
       "steps": [
-        { "type": "automation", "name": "quarto-piscar-desligar" },
-        { "type": "wait", "ms": 5600 },
-        { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" },
         {
           "type": "spotify",
           "action": "playlist",
           "name": "The Faceless Ones",
           "value": "spotify:playlist:1uH7SrkWigZ8kCnqn0rTcE"
-        }
+        },
+        { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" },
+        { "type": "wait", "ms": 5000 },
+        { "type": "automation", "name": "quarto-piscar-desligar" }
       ]
     },
     {

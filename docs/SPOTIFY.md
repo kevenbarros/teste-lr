@@ -53,9 +53,9 @@ Cada cena é uma lista de passos executados em ordem, definida em `scenes.json`.
 Um passo que falha **não** aborta os outros — o resultado volta ✓/✗ passo a passo.
 
 A única cena com botão na interface é a **Avançar de sala**, no card Automações
-da aba **Quarto**: pisca e desliga as luzes → espera o piscar acabar → liga a TV
-→ troca para a playlist. As outras (`modo-filme`, `boa-noite`, `som-na-sala`)
-ficam só no `scenes.json`, acionáveis por HTTP (ver o `curl` no fim).
+da aba **Quarto**: troca a playlist → liga a TV → espera 5s → pisca e desliga as
+luzes. As outras (`modo-filme`, `boa-noite`, `som-na-sala`) ficam só no
+`scenes.json`, acionáveis por HTTP (ver o `curl` no fim).
 
 ```json
 {
@@ -63,11 +63,11 @@ ficam só no `scenes.json`, acionáveis por HTTP (ver o `curl` no fim).
   "name": "Avançar de sala",
   "icon": "🚪",
   "steps": [
-    { "type": "automation", "name": "quarto-piscar-desligar" },
-    { "type": "wait", "ms": 5600 },
-    { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" },
     { "type": "spotify", "action": "playlist", "name": "The Faceless Ones",
-      "value": "spotify:playlist:1uH7SrkWigZ8kCnqn0rTcE" }
+      "value": "spotify:playlist:1uH7SrkWigZ8kCnqn0rTcE" },
+    { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" },
+    { "type": "wait", "ms": 5000 },
+    { "type": "automation", "name": "quarto-piscar-desligar" }
   ]
 }
 ```
@@ -89,8 +89,9 @@ ficam só no `scenes.json`, acionáveis por HTTP (ver o `curl` no fim).
   se ela estiver desligada — e desligam se já estiver ligada. É limitação do
   controle IR, que não tem código separado de liga/desliga.
 - **Passo `automation` não espera**: o piscar roda sozinho por ~5s e o passo volta
-  na hora. Por isso "Avançar de sala" tem um `wait` de 5600ms depois dele — sem
-  isso a TV acenderia no meio do piscar.
+  na hora. Como em "Avançar de sala" ele é o último, a cena responde `ok` no
+  instante em que o piscar **começa**, não quando termina — por isso a mensagem
+  do botão fala no futuro ("as luzes vão piscar e apagar").
 - **Volume nas Echo**: o Spotify normalmente recusa mudar volume de device Echo
   (`VOLUME_CONTROL_DISALLOWED`). Nesse caso o sistema avisa e a saída é usar
   "Alexa, volume 5".
