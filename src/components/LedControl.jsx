@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { irLocalApi } from '../lib/irLocalApi.js';
 import { IR_DEVICE, LED_KEYS } from '../lib/useIrLocal.js';
+import IrStatus from './IrStatus.jsx';
 import '../pages/PlanoB.css';
 
 // Controle liga/desliga da fita de LED (Smart IR local). Recebe o status
@@ -32,16 +33,7 @@ export default function LedControl({ info, refresh }) {
   return (
     <section className="planob-card">
       <h2>Fita de LED — controlar</h2>
-      {configured && (
-        <div className={`planob-status ${connected ? 'ok' : 'bad'}`}>
-          {connected ? '● Conectado ao Smart IR na rede' : '○ Procurando o Smart IR na rede...'}
-        </div>
-      )}
-      {info && !configured && (
-        <div className="planob-error">
-          Falta configurar a <strong>local key</strong> do Smart IR (<code>ir-local.json</code>).
-        </div>
-      )}
+      <IrStatus info={info} refresh={refresh} blaster="porao" label="Smart IR do porão" />
       <div className="planob-row">
         <button className="action on" disabled={!hasOn || !!busy}
           onClick={() => run('on', () => irLocalApi.send(IR_DEVICE, 'on'), 'Comando LIGAR enviado')}>

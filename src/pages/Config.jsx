@@ -2,6 +2,7 @@ import { useIrLocal } from '../lib/useIrLocal.js';
 import SoundOutputs from '../components/SoundOutputs.jsx';
 import LedLearn from '../components/LedLearn.jsx';
 import SpotifySetup from '../components/SpotifySetup.jsx';
+import IrNetwork from '../components/IrNetwork.jsx';
 import './PlanoB.css';
 
 export default function Config() {
@@ -11,6 +12,9 @@ export default function Config() {
     <div className="planob-page">
       <h1>Configuração</h1>
       <p className="planob-sub">Caixas de som, Spotify e aprendizado do controle da fita de LED.</p>
+      <p className="planob-sub">Rede dos Smart IR, caixas de som e aprendizado do controle da fita de LED.</p>
+
+      <IrNetwork />
 
       <SoundOutputs />
       <SpotifySetup />

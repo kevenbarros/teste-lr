@@ -391,12 +391,27 @@ function loadBlasterConfigs() {
   }
 }
 
+// O DHCP troca os IPs dos blasters com frequência; quando a redescoberta acha
+// o IP novo, salvamos de volta no ir-local.json para o próximo boot ser rápido.
+function persistBlasterIp(name, newIp) {
+  try {
+    const raw = JSON.parse(readFileSync(irLocalCfgPath, 'utf-8'));
+    if (raw.blasters?.[name]) {
+      raw.blasters[name].ip = newIp;
+      writeFileSync(irLocalCfgPath, JSON.stringify(raw, null, 2));
+    }
+    console.log(`[IR-local] blaster "${name}" mudou de IP → ${newIp} (salvo)`);
+  } catch (e) {
+    console.error(`[IR-local] falha ao salvar IP novo de "${name}":`, e.message);
+  }
+}
+
 for (const [id, cfg] of Object.entries(loadBlasterConfigs())) {
   if (!cfg?.key || /COLE_AQUI/.test(cfg.key)) {
     console.warn(`[IR-local] blaster "${id}" sem local key — ignorado.`);
     continue;
   }
-  const device = createLocalIr(cfg);
+  const device = createLocalIr(cfg, { onIpFound: (newIp) => persistBlasterIp(id, newIp) });
   irBlasters[id] = { device, busy: false, effect: null };
   device.ensureConnected()
     .then(() => console.log(`[IR-local] blaster "${id}" conectado`))
@@ -447,10 +462,42 @@ app.get('/api/ir-local/status', async (req, res) => {
     connected,
     blaster: id,
     blasters: Object.keys(irBlasters),
+    ip: b?.device?.state?.ip || null,
     devices,
     effect: b?.effect?.type || null,
     intervalMs: b?.effect?.intervalMs || null,
   });
+});
+
+// Força a reconexão/redescoberta agora (botão "Atualizar" da UI).
+app.post('/api/ir-local/reconnect', async (req, res) => {
+  const b = getBlaster(res, req.body.blaster);
+  if (!b) return;
+  if (b.busy) {
+    return res.status(409).json({ error: 'blaster ocupado (gravando ou piscando) — pare antes de atualizar' });
+  }
+  b.busy = true; // segura o /status para não disputar a conexão durante a busca
+  try {
+    // Duas passadas: o blaster recém-voltado ao Wi-Fi recusa conexão por alguns
+    // segundos; a 1ª passada descobre/salva o IP via broadcast e a 2ª conecta.
+    let lastErr = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) await sleep(3000);
+        await b.device.forceReconnect();
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    if (lastErr) throw lastErr;
+    res.json({ ok: true, connected: b.device.isConnected(), ip: b.device.state.ip });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    b.busy = false;
+  }
 });
 
 app.post('/api/ir-local/learn', async (req, res) => {

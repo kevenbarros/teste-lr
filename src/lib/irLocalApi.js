@@ -26,6 +26,9 @@ export const irLocalApi = {
 
   stop: (blaster = 'porao') => post('/api/ir-local/stop', { blaster }),
 
+  // Força reconexão/redescoberta do blaster na rede (botão "Atualizar").
+  reconnect: (blaster = 'porao') => post('/api/ir-local/reconnect', { blaster }),
+
   forget: (device, key) =>
     fetch(`/api/ir-local/codes/${encodeURIComponent(device)}/${encodeURIComponent(key)}`, {
       method: 'DELETE',

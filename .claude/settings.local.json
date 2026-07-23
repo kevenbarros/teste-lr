@@ -39,7 +39,8 @@
       "PowerShell($csv='c:\\\\Users\\\\keven\\\\Desktop\\\\projetos\\\\teste-lr\\\\tools\\\\dev.csv'; $rows = Import-Csv $csv | Where-Object { $_.Name -match 'SoundCore|Philips' }; \"Total matching rows: $\\($rows.Count\\)\"; $rows | Select-Object Name, Type, Direction, 'Device State', Default | Format-Table -AutoSize | Out-String -Width 200)",
       "Bash(powershell -NoProfile -Command 'Get-CimInstance Win32_Process -Filter \"Name='\\\\''powershell.exe'\\\\''\" | Where-Object { $_.CommandLine -match '\\\\''sound-ctl'\\\\'' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; '\\\\''matei pid '\\\\''+$_.ProcessId }')",
       "Bash(powershell -NoProfile -Command '\\(Get-CimInstance Win32_Process -Filter \"Name='\\\\''powershell.exe'\\\\''\" | Where-Object { $_.CommandLine -match '\\\\''sound-ctl'\\\\'' } | Measure-Object\\).Count')",
-      "Bash(ping -n 2 -w 700 192.168.1.5)"
+      "Bash(ping -n 2 -w 700 192.168.1.5)",
+      "Bash(node --check irLocal.js)"
     ]
   }
 }

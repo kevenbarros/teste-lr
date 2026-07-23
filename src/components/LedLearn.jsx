@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { irLocalApi } from '../lib/irLocalApi.js';
 import { IR_DEVICE, IR_DEVICE_NAME, LED_KEYS } from '../lib/useIrLocal.js';
+import IrStatus from './IrStatus.jsx';
 import '../pages/PlanoB.css';
 
 // Aprender os botões (ON/OFF) do controle físico da fita via Smart IR.
@@ -31,16 +32,7 @@ export default function LedLearn({ info, refresh }) {
   return (
     <section className="planob-card">
       <h2>Fita de LED — aprender botões</h2>
-      {configured && (
-        <div className={`planob-status ${connected ? 'ok' : 'bad'}`}>
-          {connected ? '● Conectado ao Smart IR na rede' : '○ Procurando o Smart IR na rede...'}
-        </div>
-      )}
-      {info && !configured && (
-        <div className="planob-error">
-          Falta configurar a <strong>local key</strong> do Smart IR (<code>ir-local.json</code>).
-        </div>
-      )}
+      <IrStatus info={info} refresh={refresh} blaster="porao" label="Smart IR do porão" />
       <p className="planob-hint">
         Clique em aprender, então <strong>aponte o controle físico da fita para o Smart IR e pressione o
         botão</strong>. Você tem 30s.
