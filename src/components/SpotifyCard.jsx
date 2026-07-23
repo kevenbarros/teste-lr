@@ -152,24 +152,6 @@ export default function SpotifyCard() {
         />
       </div>
 
-      {cfg.playlists?.length > 0 && (
-        <>
-          <div className="planob-mini-label">Playlists</div>
-          <div className="planob-row">
-            {cfg.playlists.map((p) => (
-              <button
-                key={p.uri}
-                className="action blue"
-                disabled={!!busy}
-                onClick={() => act(p.uri, () => spotifyApi.playContext(p.uri))}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
       <div className="planob-mini-label">Onde tocar</div>
       <div className="spot-devices">
         <button className="spot-mini" disabled={busy === 'devices'} onClick={loadDevices}>

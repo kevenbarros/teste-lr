@@ -40,25 +40,34 @@ Requer **Spotify Premium** — a API de playback não funciona em conta free.
 Tudo fica em `spotify-config.json` (gitignored). Alternativa às credenciais na
 UI: variáveis de ambiente `SPOTIFY_CLIENT_ID` e `SPOTIFY_CLIENT_SECRET`.
 
+## Playlists (aba Música)
+
+Os atalhos de playlist vêm do campo `playlists` do `spotify-config.json` — nome
+e URI (`spotify:playlist:<id>`, o mesmo id do link `open.spotify.com/playlist/…`).
+A capa é buscada nas playlists da conta; se falhar, o botão funciona sem imagem.
+Ver `spotify-config.example.json` para o formato.
+
 ## Cenas
 
 Cada cena é uma lista de passos executados em ordem, definida em `scenes.json`.
-Um passo que falha **não** aborta os outros — a UI mostra ✓/✗ passo a passo.
+Um passo que falha **não** aborta os outros — o resultado volta ✓/✗ passo a passo.
 
-A cena que já vem pronta é a **Modo filme**: próxima música → apaga as lâmpadas
-do quarto → liga a TV pelo Smart IR.
+A única cena com botão na interface é a **Avançar de sala**, no card Automações
+da aba **Quarto**: pisca e desliga as luzes → espera o piscar acabar → liga a TV
+→ troca para a playlist. As outras (`modo-filme`, `boa-noite`, `som-na-sala`)
+ficam só no `scenes.json`, acionáveis por HTTP (ver o `curl` no fim).
 
 ```json
 {
-  "id": "modo-filme",
-  "name": "Modo filme",
-  "icon": "🎬",
-  "description": "Troca a música, apaga as luzes do quarto e liga a TV.",
+  "id": "avancar-de-sala",
+  "name": "Avançar de sala",
+  "icon": "🚪",
   "steps": [
-    { "type": "spotify", "action": "next" },
-    { "type": "lamp", "match": "quarto", "on": false },
-    { "type": "wait", "ms": 400 },
-    { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" }
+    { "type": "automation", "name": "quarto-piscar-desligar" },
+    { "type": "wait", "ms": 5600 },
+    { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" },
+    { "type": "spotify", "action": "playlist", "name": "The Faceless Ones",
+      "value": "spotify:playlist:1uH7SrkWigZ8kCnqn0rTcE" }
   ]
 }
 ```
@@ -71,13 +80,17 @@ do quarto → liga a TV pelo Smart IR.
 | `lamp` | `match` ou `id`, `on` | `match` é regex no nome de `devices.json` — `"quarto"` pega entrada **e** saída |
 | `ir` | `blaster`, `device`, `key` | Manda um código já aprendido (ver [INFRAVERMELHO.md](INFRAVERMELHO.md)) |
 | `sound` | `file` | Toca um arquivo de `sounds/` nas caixas configuradas |
+| `automation` | `name` | Reusa uma automação do `server.js`: `quarto-piscar` ou `quarto-piscar-desligar` |
 | `wait` | `ms` | Pausa entre passos (máx. 10s) |
 
 ### Detalhes que mordem
 
-- **O `power` da TV é toggle**: o mesmo código liga e desliga. A cena "Modo filme"
-  liga a TV se ela estiver desligada — e desliga se já estiver ligada. É limitação
-  do controle IR, que não tem código separado de liga/desliga.
+- **O `power` da TV é toggle**: o mesmo código liga e desliga. As cenas ligam a TV
+  se ela estiver desligada — e desligam se já estiver ligada. É limitação do
+  controle IR, que não tem código separado de liga/desliga.
+- **Passo `automation` não espera**: o piscar roda sozinho por ~5s e o passo volta
+  na hora. Por isso "Avançar de sala" tem um `wait` de 5600ms depois dele — sem
+  isso a TV acenderia no meio do piscar.
 - **Volume nas Echo**: o Spotify normalmente recusa mudar volume de device Echo
   (`VOLUME_CONTROL_DISALLOWED`). Nesse caso o sistema avisa e a saída é usar
   "Alexa, volume 5".
