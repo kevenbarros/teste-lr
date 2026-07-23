@@ -1,6 +1,23 @@
 {
   "scenes": [
     {
+      "id": "avancar-de-sala",
+      "name": "Avançar de sala",
+      "icon": "🚪",
+      "description": "Pisca e desliga as luzes do quarto, liga a TV e troca para The Faceless Ones.",
+      "steps": [
+        { "type": "automation", "name": "quarto-piscar-desligar" },
+        { "type": "wait", "ms": 5600 },
+        { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" },
+        {
+          "type": "spotify",
+          "action": "playlist",
+          "name": "The Faceless Ones",
+          "value": "spotify:playlist:1uH7SrkWigZ8kCnqn0rTcE"
+        }
+      ]
+    },
+    {
       "id": "modo-filme",
       "name": "Modo filme",
       "icon": "🎬",

@@ -121,6 +121,18 @@
 .automation-actions button.on:hover:not(:disabled)  { background: #245534; }
 .automation-actions button.off:not(:disabled) { background: #4a2020; border-color: #713030; color: #fecaca; }
 .automation-actions button.off:hover:not(:disabled) { background: #5a2727; }
+/* Cena completa (piscar + TV + playlist) — destaque roxo pra não confundir
+   com os dois botões que só mexem nas lâmpadas. */
+.automation-actions button.scene:not(:disabled) { background: #35244f; border-color: #543a78; color: #ddd0f7; }
+.automation-actions button.scene:hover:not(:disabled) { background: #422c60; }
+
+/* Precisa vencer o ".automation-info p" acima, daí as duas classes. */
+.automation-info .automation-msg {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #7fe0a0;
+}
+.automation-info .automation-msg.bad { color: #e0b35a; }
 
 .lamp-drag-handle {
   color: #4a5060;

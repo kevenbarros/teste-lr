@@ -1,0 +1,12 @@
+{
+  "clientId": "COLE_AQUI_O_CLIENT_ID_DO_APP",
+  "clientSecret": "COLE_AQUI_O_CLIENT_SECRET_DO_APP",
+  "refreshToken": "",
+  "deviceId": "",
+  "deviceName": "",
+  "playlists": [
+    { "name": "Sala 1 - O iluminado", "uri": "spotify:playlist:6NS3MJNbuvOYWpVlv3EmNg" },
+    { "name": "The Faceless Ones", "uri": "spotify:playlist:1uH7SrkWigZ8kCnqn0rTcE" },
+    { "name": "POP INTERNACIONAL 2000 A 2026", "uri": "spotify:playlist:7bicf3a9HxuypMGJljxZYk" }
+  ]
+}

@@ -1026,6 +1026,17 @@ const scenes = createScenes({
     ir: ({ blaster, device, key }) => sendIrCode(blaster, device, key),
 
     sound: (file) => { sound.play({ file }); },
+
+    // Reusa as automações que já existem (o piscar do quarto). São
+    // fire-and-forget: voltam na hora e terminam sozinhas em ~5s.
+    automation: (name) => {
+      const run = {
+        'quarto-piscar': () => runQuartoPiscar({ finalOn: true }),
+        'quarto-piscar-desligar': () => runQuartoPiscar({ finalOn: false }),
+      }[name];
+      if (!run) throw new Error(`automação desconhecida: ${name}`);
+      run();
+    },
   },
 });
 

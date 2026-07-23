@@ -11,6 +11,7 @@
 //    { type:'lamp',    id:'eb60...',   on:true }       // ou o id exato de devices.json
 //    { type:'ir',      blaster:'quarto', device:'tv', key:'power' }
 //    { type:'sound',   file:'trovao.mp3' }
+//    { type:'automation', name:'quarto-piscar-desligar' }   // roda em background
 //    { type:'wait',    ms:800 }
 //
 //  As cenas ficam em scenes.json (versionado — não tem segredo nenhum, as
@@ -23,6 +24,12 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Automações que já existem no server.js e a cena só dispara pelo nome.
+const AUTOMATION_LABEL = {
+  'quarto-piscar': 'piscar e acender (quarto)',
+  'quarto-piscar-desligar': 'piscar e desligar (quarto)',
+};
 
 // Rótulo curto de cada passo, usado no resultado e na UI.
 export function describeStep(step) {
@@ -46,6 +53,8 @@ export function describeStep(step) {
       return `IR ${step.device}: ${step.key}`;
     case 'sound':
       return `Som: ${step.file}`;
+    case 'automation':
+      return `Automação: ${AUTOMATION_LABEL[step.name] || step.name}`;
     case 'wait':
       return `Esperar ${step.ms}ms`;
     default:
@@ -99,6 +108,10 @@ export function createScenes({ file, actions }) {
         return actions.ir({ blaster: step.blaster, device: step.device, key: step.key });
       case 'sound':
         return actions.sound(step.file);
+      // Dispara e volta na hora (o piscar roda sozinho por ~5s). Se a cena
+      // precisa esperar terminar, use um passo 'wait' depois.
+      case 'automation':
+        return actions.automation(step.name);
       case 'wait':
         return sleep(Math.max(0, Math.min(10000, Number(step.ms) || 0)));
       default:
