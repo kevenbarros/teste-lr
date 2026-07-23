@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { irLocalApi } from '../lib/irLocalApi.js';
 import { useIrLocal, BLASTER_QUARTO, TV_DEVICE, TV_DEVICE_NAME, TV_KEYS } from '../lib/useIrLocal.js';
+import IrStatus from './IrStatus.jsx';
 import '../pages/PlanoB.css';
 import './TvRemote.css';
 
@@ -39,7 +40,6 @@ export default function TvRemote() {
   const [msg, setMsg] = useState(null);
 
   const configured = info?.configured;
-  const connected = info?.connected;
   const learned = info?.devices?.[TV_DEVICE]?.keys || [];
   const missing = TV_KEYS.filter(k => !learned.includes(k.key));
 
@@ -76,15 +76,7 @@ export default function TvRemote() {
     <section className="planob-card tvremote-card">
       <h2>TV do quarto</h2>
 
-      {configured ? (
-        <div className={`planob-status ${connected ? 'ok' : 'bad'}`}>
-          {connected ? '● Conectado ao Smart IR do quarto' : '○ Procurando o Smart IR do quarto...'}
-        </div>
-      ) : (
-        <div className="planob-error">
-          Smart IR do quarto não configurado. Preencha o blaster <code>quarto</code> em <code>ir-local.json</code> e reinicie a API.
-        </div>
-      )}
+      <IrStatus info={info} refresh={refresh} blaster={BLASTER_QUARTO} label="Smart IR do quarto" />
 
       <div className="tvremote">
         <button
@@ -112,28 +104,7 @@ export default function TvRemote() {
         </div>
       </div>
 
-      <div className="tvr-footer">
-        <button
-          className={`tvr-learn-toggle${learnMode ? ' active' : ''}`}
-          disabled={!configured || !!busy}
-          onClick={() => { setLearnMode(v => !v); setMsg(null); }}
-        >
-          {learnMode ? '● Gravando — clique num botão' : '⦿ Gravar botões'}
-        </button>
-        {learnMode && (
-          <p className="planob-hint">
-            Clique no botão que quer gravar, então <strong>aponte o controle da TV para o Smart IR e
-            pressione o botão real</strong> (30s).
-          </p>
-        )}
-        {!learnMode && missing.length > 0 && (
-          <p className="planob-hint">
-            Falta gravar: {missing.map(k => k.name).join(', ')} — use <strong>⦿ Gravar botões</strong> ou o
-            terminal (<code>node scripts/ir-learn.js {missing[0].key} quarto tv</code>).
-          </p>
-        )}
-        {msg && <div className="planob-ok">{msg}</div>}
-      </div>
+  
     </section>
   );
 }

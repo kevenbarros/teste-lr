@@ -21,6 +21,28 @@
 .planob-status.ok { color: #7fe0a0; }
 .planob-status.bad { color: #e0b35a; }
 
+/* Status com botão "Atualizar" (procurar o blaster na rede) */
+.ir-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.ir-refresh {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid #3a4150;
+  background: #232937;
+  color: #c7ccd4;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+.ir-refresh:hover:not(:disabled) { filter: brightness(1.2); }
+.ir-refresh:disabled { opacity: 0.55; cursor: wait; }
+
 .planob-card {
   background: #1b1f27;
   border: 1px solid #2b313d;
@@ -136,6 +158,41 @@
   font-size: 0.75rem;
   margin-top: 0.2rem;
 }
+
+/* Card "Rede dos Smart IR" (Configuração): uma linha por blaster */
+.irnet-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #2b313d;
+  border-radius: 10px;
+  background: #12151b;
+}
+.irnet-row + .irnet-row { margin-top: 0.5rem; }
+.irnet-info {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.irnet-name { font-weight: 600; color: #dfe4ea; }
+.irnet-state { font-size: 0.85rem; }
+.irnet-state.ok  { color: #7fe0a0; }
+.irnet-state.bad { color: #e0b35a; }
+.irnet-ip {
+  margin-left: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  color: #9aa4b2;
+  font-size: 0.8rem;
+}
+.irnet-result { flex-basis: 100%; font-size: 0.85rem; }
+.irnet-result.ok  { color: #7fe0a0; }
+.irnet-result.bad { color: #ffb4b4; }
 
 .planob-error {
   background: #3a1d1d;

@@ -50,9 +50,14 @@ Peculiaridades **obrigatórias** no código (já implementadas em `irLocal.js`):
    cair) — o blaster sai do modo estudo sozinho e derruba conexões ociosas.
 4. **Rejeitar capturas curtas** (< 40 chars): códigos reais têm ~190+ chars;
    fragmentos de 12 chars são ruído (já aconteceu com `brilho+`).
-5. Se o connect falhar com IP fixo, **limpar `device.device.ip = undefined` e
-   chamar `find()`** — o `find()` do tuyapi NÃO sobrescreve um IP já definido.
-   (Só funciona em blaster que faz broadcast — o do porão sim, o do quarto não.)
+5. **Descoberta de IP em cadeia** (o DHCP desta rede troca os IPs toda hora):
+   IP configurado → broadcast UDP (`find()`) → **varredura TCP da porta 6668**
+   na sub-rede /24 (~2s). A varredura cobre blasters que não fazem broadcast
+   (quarto); no 3.4/3.5 o handshake valida id+key, então host errado é
+   rejeitado. Quando acha IP novo, `onIpFound(ip)` persiste no `ir-local.json`.
+6. **Nunca reutilizar uma instância do TuyAPI após um connect falho** — ela
+   fica presa ("connection timed out" para sempre). Cada tentativa de conexão
+   cria uma instância nova (ver `tryConnect` em `irLocal.js`).
 
 ## Como gravar botões (aprendizado)
 
@@ -119,7 +124,7 @@ do protocolo!). Depois de reset: rodar o wizard, atualizar `ir-local.json`
 | Sintoma | Causa provável | Ação |
 |---------|----------------|------|
 | Conecta e **cai ~1s após qualquer comando** | `version` errada no `ir-local.json` (ou key errada) | Testar connect com 3.4/3.5 (handshake valida a key); ajustar `version`. O quarto virou 3.5 após re-parear |
-| "○ Procurando o Smart IR..." sem sair | IP mudou (DHCP) | `arp -a` após ping sweep procurando o MAC; atualizar `ip` no json. Ideal: reserva DHCP no roteador |
+| "fora da rede" / não conecta | IP mudou (DHCP) | Clicar **⟳ Atualizar** no card (endpoint `/api/ir-local/reconnect`) — refaz a cadeia IP→broadcast→varredura e salva o IP novo. Ideal: reserva DHCP no roteador |
 | "Nenhum código capturado" com dev rodando | Disputa pela única conexão TCP | Parar `npm run dev` e usar o script de terminal |
 | Botão gravado mas não funciona / código com ~12 chars | Fragmento de captura (ruído) | Apagar a tecla e regravar (proteção < 40 chars já ignora automaticamente) |
 | `find() timed out` no scan | Blaster não faz broadcast (quarto) ou está noutra sub-rede | Conectar por IP fixo; conferir rede/isolamento de AP |
@@ -138,4 +143,5 @@ do protocolo!). Depois de reset: rodar o wizard, atualizar `ir-local.json`
 | `src/lib/irLocalApi.js` | client HTTP do front |
 | `src/components/TvRemote.jsx` | controle remoto da TV (aba Quarto) |
 | `src/components/IrLampCard.jsx` | lâmpada IR do quarto (aba Quarto) |
+| `src/components/IrStatus.jsx` | linha de status + botão ⟳ Atualizar (reconexão forçada) |
 | `src/components/LedControl/LedBlink/LedLearn.jsx` | fita de LED (abas Porão/Configuração) |
