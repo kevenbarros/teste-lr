@@ -5,6 +5,7 @@ ir-local.json
 ir-codes-local.json
 sound-config.json
 spotify-config.json
+lendas-service-account.json
 .env
 .env.local
 .DS_Store

@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import { createLocalIr } from './irLocal.js';
 import * as sound from './soundPlayer.js';
 import * as spotify from './spotify.js';
+import * as lendas from './lendas.js';
 import { createScenes } from './scenes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -1105,6 +1106,24 @@ app.put('/api/scenes', (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+//  LENDAS (Finalizar jogo → salva o tempo da equipe no ranking) — ver lendas.js
+// ════════════════════════════════════════════════════════════════════════════
+
+const lendasRoute = (handler) => async (req, res) => {
+  try {
+    res.json(await handler(req));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+app.get('/api/lendas/status', (req, res) => res.json({ configured: lendas.configured() }));
+
+app.get('/api/lendas/teams', lendasRoute(async () => ({ teams: await lendas.listTeamsToday() })));
+
+app.post('/api/lendas/ranking', lendasRoute((req) => lendas.saveRanking(req.body || {})));
 
 // ════════════════════════════════════════════════════════════════════════════
 

@@ -4,6 +4,7 @@ import Quarto from './pages/Quarto.jsx';
 import Porao from './pages/Porao.jsx';
 import Musica from './pages/Musica.jsx';
 import Config from './pages/Config.jsx';
+import FinalizarJogo from './components/FinalizarJogo.jsx';
 import { useChrono, chronoDisplayText } from './lib/localChrono.js';
 
 const STATE_LABEL = {
@@ -36,6 +37,7 @@ export default function App() {
         <NavLink to="/musica" className={navClass}>Música</NavLink>
         <NavLink to="/config" className={navClass}>Configuração</NavLink>
         <NavChrono />
+        <FinalizarJogo />
       </nav>
       <main className="shell-main">
         <Routes>
