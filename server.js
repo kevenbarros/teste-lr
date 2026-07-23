@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createLocalIr } from './irLocal.js';
 import * as sound from './soundPlayer.js';
+import * as spotify from './spotify.js';
+import { createScenes } from './scenes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 5858;
@@ -112,28 +114,35 @@ app.get('/api/lamps/:id/state', async (req, res) => {
   }
 });
 
-app.post('/api/lamps/:id/switch', async (req, res) => {
-  const entry = devices[req.params.id];
-  if (!entry?.device) return res.status(404).json({ error: 'lâmpada não conectada' });
+// Liga/desliga uma lâmpada — ao ligar volta pro branco no brilho mínimo.
+// Usado pela rota /switch e pelas cenas (ver seção CENAS no fim do arquivo).
+async function applyLampSwitch(entry, on) {
+  if (!entry?.device) throw new Error('lâmpada não conectada');
   stopEffect(entry);
   const switchDp = entry.meta.switchDp || 20;
   const modeDp = entry.meta.modeDp || 21;
   const brightDp = entry.meta.brightnessDp || 22;
   const tempDp = entry.meta.tempDp || 23;
+  if (on) {
+    await entry.device.set({
+      multiple: true,
+      data: {
+        [switchDp]: true,
+        [modeDp]: 'white',
+        [tempDp]: 0,
+        [brightDp]: 1
+      }
+    });
+  } else {
+    await entry.device.set({ dps: switchDp, set: false });
+  }
+}
+
+app.post('/api/lamps/:id/switch', async (req, res) => {
+  const entry = devices[req.params.id];
+  if (!entry?.device) return res.status(404).json({ error: 'lâmpada não conectada' });
   try {
-    if (req.body.on) {
-      await entry.device.set({
-        multiple: true,
-        data: {
-          [switchDp]: true,
-          [modeDp]: 'white',
-          [tempDp]: 0,
-          [brightDp]: 1
-        }
-      });
-    } else {
-      await entry.device.set({ dps: switchDp, set: false });
-    }
+    await applyLampSwitch(entry, !!req.body.on);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -496,21 +505,32 @@ app.post('/api/ir-local/learn', async (req, res) => {
   }
 });
 
+// Dispara um código já aprendido. Erros carregam .status para a rota responder
+// o mesmo que respondia antes (503 sem blaster, 404 sem código). Usado também
+// pelas cenas, que precisam mandar IR sem passar por HTTP.
+async function sendIrCode(blasterId, device, key) {
+  const id = blasterId || DEFAULT_BLASTER;
+  const b = irBlasters[id];
+  if (!b) {
+    throw Object.assign(new Error(`Smart IR "${id}" não configurado em ir-local.json`), { status: 503 });
+  }
+  const code = loadLocalCodes().devices[device]?.keys?.[key];
+  if (!code) {
+    throw Object.assign(new Error(`código "${key}" não aprendido para "${device}"`), { status: 404 });
+  }
+  stopBlasterEffect(b);
+  await b.device.ensureConnected();
+  await b.device.sendCode(code);
+}
+
 app.post('/api/ir-local/send', async (req, res) => {
-  const b = getBlaster(res, req.body.blaster);
-  if (!b) return;
   const device = String(req.body.device || 'fita-led');
   const key = String(req.body.key || '').trim();
-  const store = loadLocalCodes();
-  const code = store.devices[device]?.keys?.[key];
-  if (!code) return res.status(404).json({ error: `código "${key}" não aprendido para "${device}"` });
-  stopBlasterEffect(b);
   try {
-    await b.device.ensureConnected();
-    await b.device.sendCode(code);
+    await sendIrCode(req.body.blaster, device, key);
     res.json({ ok: true, device, key });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
@@ -923,6 +943,109 @@ app.post('/api/sixled/extend', async (req, res) => {
     return { ip: d.ip, ok: saveOk };
   }));
   res.json({ ok: true, results });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SPOTIFY (toca nas Alexas via Spotify Connect) — ver spotify.js
+// ════════════════════════════════════════════════════════════════════════════
+
+const spotifyRoute = (handler) => async (req, res) => {
+  try {
+    res.json(await handler(req));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+app.get('/api/spotify/status', (req, res) => res.json(spotify.status()));
+
+app.post('/api/spotify/config', spotifyRoute((req) => spotify.setConfig(req.body || {})));
+
+// Abre no navegador (link normal, não fetch): manda o usuário pro login do Spotify.
+app.get('/api/spotify/login', (req, res) => {
+  try {
+    res.redirect(spotify.authUrl());
+  } catch (err) {
+    res.status(400).send(`<p>${err.message}</p>`);
+  }
+});
+
+// O Spotify redireciona pra cá com ?code=... — trocamos pelo refresh_token.
+app.get('/api/spotify/callback', async (req, res) => {
+  const page = (title, body) =>
+    `<!doctype html><meta charset="utf-8"><title>${title}</title>` +
+    `<body style="font-family:system-ui;background:#12151c;color:#e6e9ee;padding:3rem;text-align:center">` +
+    `<h1>${title}</h1><p>${body}</p></body>`;
+
+  if (req.query.error) {
+    return res.status(400).send(page('Login cancelado', String(req.query.error)));
+  }
+  try {
+    await spotify.exchangeCode(String(req.query.code || ''));
+    res.send(page('Spotify conectado ✅', 'Pode fechar esta aba e voltar pra aba Música.'));
+  } catch (err) {
+    res.status(400).send(page('Falhou ao conectar', err.message));
+  }
+});
+
+app.post('/api/spotify/logout', (req, res) => res.json(spotify.logout()));
+
+app.get('/api/spotify/devices', spotifyRoute(async () => ({ devices: await spotify.listDevices() })));
+
+// Fixa o destino padrão (o grupo multi-cômodos das Alexas).
+app.post('/api/spotify/device', spotifyRoute((req) => spotify.setDevice(req.body?.id, req.body?.name)));
+
+app.post('/api/spotify/transfer', spotifyRoute((req) => spotify.transfer({ play: req.body?.play })));
+
+app.get('/api/spotify/now', spotifyRoute(() => spotify.nowPlaying()));
+
+app.get('/api/spotify/playlists', spotifyRoute(async () => ({ playlists: await spotify.playlists() })));
+
+app.post('/api/spotify/command', spotifyRoute((req) => spotify.command(req.body?.action, req.body?.value)));
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CENAS (um botão → música + luz + TV) — ver scenes.js
+// ════════════════════════════════════════════════════════════════════════════
+
+const scenes = createScenes({
+  file: join(__dirname, 'scenes.json'),
+  actions: {
+    spotify: (action, value) => spotify.command(action, value),
+
+    // match é regex no nome da lâmpada: "quarto" pega entrada E saída de uma vez.
+    lamp: async ({ match, id, on }) => {
+      const targets = id
+        ? [devices[id]].filter(Boolean)
+        : Object.values(devices).filter((e) => new RegExp(match, 'i').test(e.meta.name));
+      if (!targets.length) throw new Error(`nenhuma lâmpada casa com "${id || match}"`);
+      const results = await Promise.allSettled(targets.map((e) => applyLampSwitch(e, on)));
+      const failed = results.filter((r) => r.status === 'rejected');
+      if (failed.length) throw new Error(failed[0].reason?.message || 'falha ao acionar lâmpada');
+    },
+
+    ir: ({ blaster, device, key }) => sendIrCode(blaster, device, key),
+
+    sound: (file) => { sound.play({ file }); },
+  },
+});
+
+app.get('/api/scenes', (req, res) => res.json({ scenes: scenes.list() }));
+
+// Um passo que falha não derruba a cena: o resultado diz o que deu certo.
+app.post('/api/scenes/:id/run', async (req, res) => {
+  try {
+    res.json(await scenes.run(req.params.id));
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+});
+
+app.put('/api/scenes', (req, res) => {
+  try {
+    res.json({ scenes: scenes.save(req.body?.scenes) });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ════════════════════════════════════════════════════════════════════════════

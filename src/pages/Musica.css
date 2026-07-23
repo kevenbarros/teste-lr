@@ -1,0 +1,159 @@
+/* Aba Música: cenas (botões grandes) + player do Spotify. Segue a paleta do
+   PlanoB.css, que já é a base dos cards do app. */
+
+/* ── Cenas ───────────────────────────────────────────────────────────────── */
+
+.scene-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.scene-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem;
+  border: 1px solid #2b313d;
+  border-radius: 12px;
+  background: #232834;
+  color: #e6e9ee;
+  text-align: left;
+  cursor: pointer;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.scene-btn:not(:disabled):hover { filter: brightness(1.15); }
+.scene-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.scene-btn.busy { box-shadow: 0 0 0 2px rgba(199, 154, 43, 0.45); }
+
+.scene-icon { font-size: 1.6rem; }
+.scene-name { font-weight: 600; }
+.scene-desc { color: #9aa4b2; font-size: 0.8rem; }
+
+.scene-result {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  font-size: 0.85rem;
+}
+.scene-result li { padding: 0.15rem 0; }
+.scene-result li.ok { color: #7fe0a0; }
+.scene-result li.bad { color: #ffb4b4; }
+.scene-result-err { color: #e0b35a; }
+
+/* ── Player ──────────────────────────────────────────────────────────────── */
+
+.spot-card h2 { display: flex; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; }
+.spot-target { color: #7fe0a0; font-size: 0.8rem; font-weight: 500; }
+
+.spot-now {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin: 0.5rem 0 1rem;
+}
+
+.spot-art {
+  width: 84px;
+  height: 84px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex: none;
+}
+.spot-art-empty {
+  display: grid;
+  place-items: center;
+  background: #232834;
+  color: #5b6472;
+  font-size: 1.8rem;
+}
+
+.spot-meta { min-width: 0; }
+.spot-track {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spot-artist { color: #c7ccd4; font-size: 0.9rem; }
+.spot-sub { color: #8a93a0; font-size: 0.78rem; margin-top: 0.2rem; }
+
+.spot-controls {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.spot-controls button {
+  width: 64px;
+  height: 48px;
+  border: 0;
+  border-radius: 10px;
+  background: #3b4252;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+.spot-controls button:not(:disabled):hover { filter: brightness(1.15); }
+.spot-controls button:disabled { opacity: 0.45; cursor: not-allowed; }
+.spot-controls .spot-play { background: #1db954; width: 84px; }
+
+.spot-mini {
+  margin-top: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #2b313d;
+  border-radius: 8px;
+  background: #232834;
+  color: #c7ccd4;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.spot-mini:not(:disabled):hover { filter: brightness(1.2); }
+
+.spot-link-btn {
+  flex: 1 1 160px;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  background: #1db954;
+  color: #06210f;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
+.spot-devices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.spot-device {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #2b313d;
+  border-radius: 10px;
+  background: #232834;
+  color: #e6e9ee;
+  cursor: pointer;
+  text-align: left;
+}
+.spot-device:not(:disabled):hover { filter: brightness(1.15); }
+.spot-device.target { border-color: #1db954; }
+.spot-device.active { box-shadow: inset 3px 0 0 #1db954; }
+.spot-device-name { font-weight: 600; }
+.spot-device-type { color: #8a93a0; font-size: 0.75rem; }
+
+.spot-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #2b313d;
+  border-radius: 10px;
+  background: #12151c;
+  color: #e6e9ee;
+  font-size: 0.9rem;
+}
+.spot-input:focus { outline: none; border-color: #1db954; }

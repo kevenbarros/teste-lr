@@ -1,0 +1,39 @@
+{
+  "scenes": [
+    {
+      "id": "modo-filme",
+      "name": "Modo filme",
+      "icon": "🎬",
+      "description": "Troca a música, apaga as luzes do quarto e liga a TV.",
+      "steps": [
+        { "type": "spotify", "action": "next" },
+        { "type": "lamp", "match": "quarto", "on": false },
+        { "type": "wait", "ms": 400 },
+        { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" }
+      ]
+    },
+    {
+      "id": "boa-noite",
+      "name": "Boa noite",
+      "icon": "🌙",
+      "description": "Pausa o Spotify, apaga todas as lâmpadas e desliga a TV.",
+      "steps": [
+        { "type": "spotify", "action": "pause" },
+        { "type": "lamp", "match": "quarto", "on": false },
+        { "type": "lamp", "match": "sala", "on": false },
+        { "type": "wait", "ms": 400 },
+        { "type": "ir", "blaster": "quarto", "device": "tv", "key": "power" }
+      ]
+    },
+    {
+      "id": "som-na-sala",
+      "name": "Som na sala",
+      "icon": "🔊",
+      "description": "Acende a luz da sala e volta a tocar nas Alexas.",
+      "steps": [
+        { "type": "lamp", "match": "sala", "on": true },
+        { "type": "spotify", "action": "play" }
+      ]
+    }
+  ]
+}
